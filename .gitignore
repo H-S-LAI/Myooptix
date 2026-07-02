@@ -28,6 +28,10 @@ annotation_tool/best_model.pth
 # Windows
 Thumbs.db
 
+# PyInstaller build output
+myooptix_app/build/
+myooptix_app/dist/
+
 # IDE
 .vscode/
 .idea/
