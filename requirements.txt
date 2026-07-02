@@ -1,0 +1,10 @@
+PyQt6
+opencv-python
+numpy
+scipy
+pandas
+openpyxl
+scikit-image
+segmentation-models-pytorch
+torch
+matplotlib

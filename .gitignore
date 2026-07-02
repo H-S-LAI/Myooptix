@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+.venv_win/
+venv/
+env/
+
+# App data / outputs
+config.json
+compute_settings.json
+*/_pkl_for_review/
+*/final_excel_exports/
+*/_Merged_Reports/
+Analysis_*/
+project_*/
+
+# Model weights (distributed via GitHub Releases)
+annotation_tool/best_model.pth
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
