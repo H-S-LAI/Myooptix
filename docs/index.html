@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyoOptix — Cardiac Organoid Motion Analysis</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    header svg { width: 32px; height: 32px; }
+
+    header span {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      text-align: center;
+      max-width: 680px;
+    }
+
+    .badge {
+      background: #1f6feb22;
+      border: 1px solid #1f6feb55;
+      color: #58a6ff;
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #8b949e;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 48px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.15s;
+      cursor: pointer;
+    }
+
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    .btn-win {
+      background: #1f6feb;
+      color: #fff;
+    }
+
+    .btn-mac {
+      background: #21262d;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+    }
+
+    .btn-mac.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: #6e7681;
+      margin-bottom: 64px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 64px;
+    }
+
+    .feature {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: left;
+    }
+
+    .feature .icon { font-size: 1.4rem; margin-bottom: 8px; }
+
+    .feature h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .feature p {
+      font-size: 0.8rem;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+
+    .steps {
+      width: 100%;
+      max-width: 480px;
+      text-align: left;
+      margin-bottom: 64px;
+    }
+
+    .steps h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .step-num {
+      background: #1f6feb;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step p { font-size: 0.9rem; color: #c9d1d9; line-height: 1.5; }
+    .step p span { color: #8b949e; font-size: 0.82rem; }
+
+    footer {
+      width: 100%;
+      border-top: 1px solid #21262d;
+      padding: 24px 40px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #6e7681;
+    }
+
+    footer a { color: #58a6ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#e85c7a"/>
+  </svg>
+  <span>MyoOptix</span>
+</header>
+
+<main>
+  <div class="badge">v0.2.0 — Latest Release</div>
+
+  <h1>Cardiac Organoid<br>Motion Analysis</h1>
+
+  <p class="subtitle">
+    Automated beating analysis for cardiac organoid videos.<br>
+    No Python required — just download and run.
+  </p>
+
+  <div class="buttons">
+    <a class="btn btn-win"
+       href="https://github.com/H-S-LAI/Myooptix/releases/download/v0.2.0/MyoOptix-win.zip">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+      </svg>
+      Download for Windows
+    </a>
+    <a class="btn btn-mac disabled" href="#">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+      </svg>
+      Mac — Coming Soon
+    </a>
+  </div>
+
+  <p class="hint">Windows 10/11 · 64-bit · ~292 MB · No Python required</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="icon">📹</div>
+      <h3>Video Analysis</h3>
+      <p>KLT optical flow tracking on cardiac organoid videos</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📈</div>
+      <h3>Beat Metrics</h3>
+      <p>BPM, IBI, HRV, Contractility — exported to Excel</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🧠</div>
+      <h3>Auto Segmentation</h3>
+      <p>U-Net (ResNet-34) or Otsu for ROI detection</p>
+    </div>
+    <div class="feature">
+      <div class="icon">⚡</div>
+      <h3>No Setup</h3>
+      <p>Self-contained exe — extract and run</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <h2>Quick Start</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <p>Download and extract <code>MyoOptix-win.zip</code></p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <p>Run <code>MyoOptix.exe</code> <span>(first launch downloads model weights ~93 MB)</span></p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <p>Open a project folder or use Quick Analysis for a single video</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <p>Export results to Excel</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Built at <a href="https://github.com/H-S-LAI/Myooptix">TMU Lab</a> ·
+  <a href="https://github.com/H-S-LAI/Myooptix/releases">All Releases</a> ·
+  <a href="https://github.com/H-S-LAI/Myooptix/issues">Report a Bug</a>
+</footer>
+
+</body>
+</html>
