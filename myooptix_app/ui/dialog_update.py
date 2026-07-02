@@ -182,15 +182,27 @@ class UpdateAvailableDialog(QDialog):
     def _on_finished(self, path: str):
         self._bar.setValue(100)
         import platform, subprocess
-        if platform.system() == "Darwin":
-            subprocess.Popen(["open", "-R", path])  # reveal in Finder
+        sys_name = platform.system()
+        if sys_name == "Darwin":
+            subprocess.Popen(["open", "-R", path])
+        elif sys_name == "Windows":
+            subprocess.Popen(["explorer", f"/select,{path}"])
+        if sys_name == "Darwin":
+            instructions = (
+                "1. Close this app\n"
+                "2. Extract the zip and replace the old MyoOptix.app\n"
+                "3. Relaunch"
+            )
+        else:
+            instructions = (
+                "1. Close this app\n"
+                "2. Extract the zip and replace the old MyoOptix folder\n"
+                "3. Run MyoOptix.exe from the new folder"
+            )
         QMessageBox.information(
             self, "Download Complete",
             f"New version downloaded to your Desktop:\n{path}\n\n"
-            "Please:\n"
-            "1. Close this app\n"
-            "2. Open the zip and replace the old MyoOptix.app\n"
-            "3. Relaunch"
+            f"Please:\n{instructions}"
         )
         self.accept()
 
