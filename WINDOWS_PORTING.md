@@ -1,158 +1,232 @@
-# MyoOptix — Windows Porting Guide
+# MyoOptix — Windows Porting & Packaging Guide
 
-This document is for the agent continuing work on a Windows machine.
-The goal is: (1) get the app running on Windows, (2) fix any UI layout issues, (3) package it as a standalone `.exe`.
+This document records everything done on the Windows machine (2026-07-02) and what to do next.
 
 ---
 
 ## Project Background
 
 MyoOptix is a PyQt6 desktop app for cardiac organoid video analysis, migrated from MATLAB to Python.
-The active app is under `myooptix_app/`. Core algorithms are in `cardio_py/core/`.
-
-### Key files
-- `myooptix_app/main.py` — entry point
-- `myooptix_app/ui/style.py` — all QSS styling (font, colors, layout)
-- `myooptix_app/ui/dialog_new_project.py` — New Project dialog
-- `myooptix_app/ui/dialog_open_project.py` — Open Project dialog (recent projects list)
-- `cardio_py/core/mdp.py` — MDP peak detection + PCA axis selection
-- `cardio_py/core/tracking.py` — KLT optical flow
-- `cardio_py/core/force.py` — contractility / anchor search
-- `cardio_py/core/segmentation.py` — Otsu + U-Net segmentation
-- `annotation_tool/best_model.pth` — U-Net weights (required at runtime)
-
-### Python environment (Windows)
-The Mac `.venv/` uses Unix binaries and does NOT work on Windows.
-A separate Windows venv is at `.venv_win/`.
-
-To recreate it:
-```
-python -m venv .venv_win
-.venv_win\Scripts\activate
-pip install PyQt6 opencv-python numpy scipy pandas openpyxl scikit-image segmentation-models-pytorch torch matplotlib
-```
-
-### Running the app
-Double-click `啟動 MyoOptix.bat` in the project root, or:
-```
-cd myooptix_app
-..\\.venv_win\Scripts\python.exe main.py
-```
+- Active app: `myooptix_app/`
+- Core algorithms: `cardio_py/core/`
+- GitHub repo: `https://github.com/H-S-LAI/Myooptix` (public)
+- Clean repo folder on this machine: `C:\Users\LAI\Desktop\myooptix\`
+- Development folder (venv, MATLAB source, test data): `C:\Users\LAI\Desktop\20260630_matlabtopython\`
 
 ---
 
-## What was completed on Windows (2026-07-02)
+## Environment
 
-### Step 1 — Environment ✅
-- Created `.venv_win` with Python 3.13.6 (system Python)
-- Installed all packages; torch 2.12.1+cpu pulled in automatically via segmentation-models-pytorch
+### Windows venv
+The Mac `.venv/` has Unix binaries and does **not** work on Windows.
+The Windows venv is at `C:\Users\LAI\Desktop\20260630_matlabtopython\.venv_win\`.
 
-### Step 2 — UI fixes ✅
+To recreate from scratch:
+```
+python -m venv .venv_win
+.venv_win\Scripts\activate
+pip install PyQt6 opencv-python numpy scipy pandas openpyxl scikit-image segmentation-models-pytorch torch matplotlib pyinstaller
+```
 
-**DPI scaling** (`main.py`):
+Installed versions (2026-07-02): Python 3.13.6, torch 2.12.1+cpu (CPU-only, important for bundle size).
+
+### Running from source
+```
+cd C:\Users\LAI\Desktop\20260630_matlabtopython\myooptix_app
+..\\.venv_win\Scripts\python.exe main.py
+```
+Or double-click `啟動 MyoOptix.bat` in the repo root (opens the clean repo's app using the dev venv).
+
+---
+
+## What Was Done (2026-07-02)
+
+### 1 — Windows UI Fixes ✅
+
+**DPI scaling** (`main.py` line 7):
 ```python
-import os
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 ```
-Added before `QApplication` creation to prevent blurry/oversized widgets on 125%/150% displays.
+Prevents blurry/oversized widgets at 125%/150% display scaling.
 
 **Radio button indicators invisible** (`ui/style.py`):
-On Windows, `QWidget { background-color }` in global QSS wipes out the native radio button indicator circles. Fixed by adding explicit `QRadioButton::indicator` styles:
-```css
-QRadioButton::indicator { width: 14px; height: 14px; border-radius: 7px; ... }
-QRadioButton::indicator:checked { background-color: #7c9c6e; }
-```
+On Windows, `QWidget { background-color }` in global QSS suppresses native radio button circles.
+Fixed with explicit `QRadioButton::indicator` CSS block.
 
 **macOS hidden files in video list** (`cardio_py/core/io.py`):
-`._3.mov`, `._synthetic_organoid.mp4` etc. were showing in the dashboard. Fixed in `scan_video_folder` — skip any file whose name starts with `._`.
+`._3.mov`, `._synthetic_organoid.mp4` were appearing in the dashboard.
+Fixed: `scan_video_folder` now skips any filename starting with `._`.
 
-### Step 3 — UX improvements ✅
-
-**Launch shortcut** — `啟動 MyoOptix.bat` created at project root (same as Mac's `.command`).
+### 2 — UX Improvements ✅
 
 **New Project dialog** (`ui/dialog_new_project.py`):
-- Removed the separate "Video root" field in Auto scan mode — save location is now used as the video root automatically (they are always the same folder in practice)
-- Project name auto-fills as `project_{folder_name}_{date}` when the user picks a save location (via Browse or by typing)
+- Removed separate "Video root" field — in Auto scan mode, save folder = video root (always true in practice)
+- Project name auto-fills as `project_{folder_name}_{YYYYMMDD}` when user picks a save location
 
 **Open Project dialog** (`ui/dialog_open_project.py`):
-- Replaced drag-and-drop text field with a 2-column `QTreeWidget` showing **Project name** | **Location (root path)**
-- Stale paths (no longer on this machine) are auto-removed from the list on open and saved back to config
-- Browse button remains for projects not in the list
+- Replaced drag-and-drop field with 2-column `QTreeWidget`: **Project name** | **Location**
+- Stale paths are auto-removed on open and saved back to `config.json`
+- Browse button retained for unlisted projects
 
 **Config format** (`main.py`):
-- Changed from `{"last_project": "..."}` to `{"recent_projects": ["...", "..."]}` (up to 8 entries, most recent first)
-- Backward compatible: old `last_project` key is read on first launch and migrated
+- `config.json` now stores `{"recent_projects": [...]}` (up to 8 entries, most recent first)
+- Backward compatible with old `{"last_project": "..."}` format
 
-### Step 4 — Cross-platform output validation ✅
+**Launch shortcut** — `啟動 MyoOptix.bat` at repo root (Windows equivalent of Mac's `.command`).
 
-Compared Windows output vs Mac output of same code (same videos, `Analysis_20260702` vs `project_20260630_matlabtopython_20260702`):
+### 3 — Cross-Platform Output Validation ✅
 
-| Metric | Status |
+Compared Windows vs Mac output (same videos, same code):
+
+| Metric | Result |
 |--------|--------|
 | BPM, IBI_avg, HRV | Identical or < 0.003 difference |
 | ST_s, DT_s | Within 0.01–0.15 s (floating point) |
 | Contractility_Mag_um_s (mean per ROI) | Within **2.5%** |
-| PeakHeight | Different by design — PCA angle varies 1–3° between platforms due to OpenCV float differences |
+| PeakHeight | Intentionally different — PCA angle varies 1–3° across platforms |
 
 **Known edge case — Before_1 ROI 3:**
-Mac detected 19 beats, Windows detected 18. Mac found one extra boundary beat at t=0.300s (start of video). This shifts BPM by 0.54 (34.15 vs 34.69, ~1.6%) and IBI_avg by 0.027 s. Not a bug — borderline case where PCA angle difference (99° vs 96°) causes one platform to detect a partial beat at the video edge. Mean Contractility for this ROI differs by 2.0 µm/s (2.5%).
+Mac found 19 beats, Windows found 18. One extra boundary beat at t=0.300 s due to PCA angle difference (99° vs 96°). BPM difference 0.54 (~1.6%), Contractility difference 2.0 µm/s (2.5%). Not a bug.
+
+### 4 — Auto-Update & Model Download ✅
+
+New files added to repo:
+
+**`myooptix_app/updater.py`**
+- `weights_exist()` — checks if `annotation_tool/best_model.pth` is present
+- `check_for_update(version)` — queries GitHub Releases API, returns new version info or None
+- `download_weights(progress_cb)` — downloads `best_model.pth` from `model-weights` release
+- Path logic handles both source-run and frozen (PyInstaller) exe correctly
+
+**`myooptix_app/ui/dialog_update.py`**
+- `ModelDownloadDialog` — shown at startup if `best_model.pth` is missing; has progress bar
+- `UpdateAvailableDialog` — shown by Help → Check for Updates; opens browser to release page
+
+**`myooptix_app/ui/main_window.py`** — Help menu added:
+- Help → Check for Updates (background thread, non-blocking)
+- Help → About (shows version + git hash when running from source)
+
+**`main.py`** — checks for weights before showing Welcome dialog; shows download dialog if missing.
+
+### 5 — Version System ✅
+
+**`version.py`** (repo root):
+```python
+VERSION = "0.1.0"
+
+def get_version_string() -> str:
+    # Returns "0.1.0 (abc1234)" from source, "0.1.0" from frozen exe
+```
+
+- Change only `VERSION` when releasing a new version
+- About dialog shows git hash automatically when running from source (useful for debugging which exact commit is running)
+- Frozen exe shows bare version (no git available inside bundle)
+
+### 6 — PyInstaller Packaging ✅
+
+**Spec file**: `myooptix_app/myooptix.spec`
+
+Build command (run from `myooptix_app/`):
+```
+.venv_win\Scripts\pyinstaller.exe myooptix.spec
+```
+
+Build result: `myooptix_app/dist/MyoOptix/` — 786 MB folder, 3913 files.
+Largest components: `torch_cpu.dll` 293 MB, `cv2.pyd` 82 MB.
+
+**What is bundled:** Python 3.13 runtime, PyQt6, torch (CPU-only), OpenCV, scipy, numpy, pandas, skimage, segmentation-models-pytorch, timm, matplotlib, cardio_py, all UI modules.
+
+**What is NOT bundled:** `annotation_tool/best_model.pth` (downloaded at runtime from GitHub Releases).
+
+**Frozen path logic** (`segmentation.py`, `updater.py`):
+```python
+if getattr(sys, "frozen", False):
+    base = Path(sys.executable).parent   # next to the .exe
+else:
+    base = Path(__file__).parent.parent.parent  # repo root
+```
+
+**Test result:** exe ran successfully from an isolated folder with `PYTHONPATH=""` and `PYTHONHOME=""` — confirmed no Python installation required on target machine.
+
+Distribution zip: `MyoOptix_v0.1.0_Windows.zip` — 292 MB.
+
+### 7 — GitHub Releases ✅
+
+Repository: `https://github.com/H-S-LAI/Myooptix` (public)
+
+| Tag | Asset | Size | Purpose |
+|-----|-------|------|---------|
+| `model-weights` | `best_model.pth` | 93 MB | Auto-downloaded by app on first launch |
+| `v0.1.0` | `MyoOptix_v0.1.0_Windows.zip` | 292 MB | Distributed to lab members |
+
+**End-user install steps (no Python needed):**
+1. Download `MyoOptix_v0.1.0_Windows.zip` from GitHub Releases
+2. Extract anywhere
+3. Double-click `MyoOptix.exe`
+4. First launch: click Download to fetch model weights (~93 MB, one-time)
+5. Done
 
 ---
 
-## Step 3 — Packaging (TODO)
+## How to Release a New Version
 
-**Decision pending:** before packaging, need to decide on update strategy:
-- **Option A**: distribute folder + `.bat`, update via git pull script (lightweight, recommended for lab use)
-- **Option B**: PyInstaller standalone `.exe` (good for non-technical users, updates require full re-package ~1.5 GB)
-- **Option C**: PyInstaller + GitHub Releases auto-updater (best long-term, most complex to build)
+1. Make code changes, test
+2. Update `VERSION = "x.y.z"` in `version.py`
+3. `git add . && git commit -m "release: vx.y.z" && git push`
+4. Re-run PyInstaller: `.venv_win\Scripts\pyinstaller.exe myooptix_app\myooptix.spec`
+5. Zip the dist: `Compress-Archive dist\MyoOptix MyoOptix_vx.y.z_Windows.zip`
+6. GitHub → New Release → tag `vx.y.z` → upload zip
+7. App's Help → Check for Updates will detect the new tag and prompt users
 
-When ready to package with PyInstaller:
+---
+
+## Pending / Recommended Next Steps
+
+### High priority
+
+**① Demo / self-test button**
+Add a "Run Demo Test" button (Welcome screen or Help menu) that:
+- Loads `demo/Before_1.mp4` (needs to be added to `.spec` datas)
+- Runs Quick Analysis with default params on ROI 1
+- Shows result — confirms the exe is working correctly on a new machine
+- `demo/Before_1.mp4` is already in the repo (4.7 MB, 960×540)
+
+**② Mac `.app` packaging**
+On the Mac, run PyInstaller with an equivalent spec:
 ```
 pip install pyinstaller
 cd myooptix_app
 pyinstaller myooptix.spec
 ```
+Produce `MyoOptix_v0.1.0_Mac.zip` and upload to the same v0.1.0 Release.
+The spec's `datas` and `pathex` are already cross-platform — only the output exe name differs.
 
-Use a `.spec` file (not ready yet — create before packaging):
-```python
-a = Analysis(
-    ['main.py'],
-    datas=[
-        ('../annotation_tool/best_model.pth', 'annotation_tool'),
-        ('assets/', 'assets/'),
-    ],
-    hiddenimports=['segmentation_models_pytorch', 'timm'],
-)
-```
+### Lower priority
 
-Known issues to handle:
-- No `.ico` icon file yet (only `assets/heart.svg`) — convert to `.ico` before packaging
-- `cv2` may need explicit DLL inclusion
-- `torch` is ~1.5 GB in the bundle; confirm CPU-only version is installed
+**③ App icon (.ico)**
+Only `assets/heart.svg` exists. Convert to `.ico` (256×256) and set `icon=` in the spec before next packaging run. Tools: `cairosvg` + `Pillow`, or an online SVG-to-ICO converter.
+
+**④ Installer (optional)**
+For a more polished distribution, wrap the dist folder with NSIS or Inno Setup to create a proper Windows installer with Start Menu shortcut and uninstaller. Only needed if lab members find the "extract and run" approach confusing.
+
+**⑤ Automated build (optional)**
+Add a GitHub Actions workflow (`.github/workflows/build.yml`) that builds the exe automatically on each push to `main`, so you don't have to rebuild manually on every release.
 
 ---
 
-## What is already done (do not redo)
+## Known Non-Issues (Intentional Differences from MATLAB)
 
-- PCA-based axis selection (replaces X/Y best-axis): `mdp.py` → `select_dominant_signal()`
-- Contractility Std metric added to Excel exports and Review panel
-- Scale (µm/px) now saved/loaded from `compute_settings.json` per project
-- Close guard on ReviewDialog (prompts if not exported)
-- All callers updated to use `select_dominant_signal`
-- Windows venv at `.venv_win/` (do not delete)
-- DPI fix and radio button fix already in code
-
-## Known non-issues (intentional differences from MATLAB)
-
-- PCA projection is Python-only; MATLAB used X/Y axis selection — this is intentional
+- PCA projection is Python-only; MATLAB used X/Y axis selection — intentional
 - Baseline correction uses centered movmin (Python) vs trailing (MATLAB) — Before/After ratio cancels this out
 - `Contractility_Std_um_s` column does not exist in MATLAB output — Python adds it
 - Cross-platform Contractility difference ≤ 2.5% is normal (OpenCV float behavior)
+- `tensorboard` not installed — PyInstaller warning is harmless
 
 ---
 
-## Contact / reference
+## Contact / Reference
 
-User email: b101110099@tmu.edu.tw
-MATLAB source (reference only, do not modify): `202260413_7.6.0_Bugfix/`
-Golden standard data: `golden_standard.mat`, `golden_tracking.mat`
+- User email: b101110099@tmu.edu.tw
+- MATLAB source (reference only, do not modify): `202260413_7.6.0_Bugfix/`
+- Golden standard data: `golden_standard.mat`, `golden_tracking.mat`
+- GitHub repo: `https://github.com/H-S-LAI/Myooptix`
