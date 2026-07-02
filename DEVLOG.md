@@ -28,6 +28,15 @@ After appending, commit and push so the other side can pull and see.
 - `main.py`: checks for update on every launch (silent if no network, timeout 5s)
 - Update flow: launch → detect new version → Download button → zip saved to Desktop → user replaces old .app
 
+## 2026-07-02 Windows — Sync Mac changes + Windows fix
+
+- Pulled Mac commits (3 new: `download_app_update`, startup update check, `myooptix_mac.spec`)
+- No merge conflicts — fast-forward clean
+- Fixed `dialog_update.py`: `_on_finished` was Mac-only (Finder reveal + `.app` wording)
+  - Added Windows branch: `explorer /select,<path>` reveal + "replace the old MyoOptix folder / run MyoOptix.exe" instructions
+- **Asset naming note for future releases**: `updater.py` now expects `MyoOptix-win.zip` (Windows) and `MyoOptix-mac.zip` (Mac) — old `MyoOptix_v0.1.0_Windows.zip` naming is deprecated; next release must use the new names
+- Pushed: commit `18ee392`
+
 ## 2026-07-02 Mac — Algorithm + Analysis
 
 - Integrated PCA as default axis selection (`mdp.py`: `select_dominant_signal()`)
