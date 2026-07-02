@@ -38,6 +38,16 @@ def main():
         from ui.dialog_update import ModelDownloadDialog
         ModelDownloadDialog().exec()  # user can skip; Otsu will be used instead
 
+    # Background update check (silent if no network)
+    try:
+        from version import VERSION
+        info = updater.check_for_update(VERSION)
+        if info:
+            from ui.dialog_update import UpdateAvailableDialog
+            UpdateAvailableDialog(info).exec()
+    except Exception:
+        pass
+
     welcome = WelcomeDialog()
     if welcome.exec() != WelcomeDialog.DialogCode.Accepted:
         sys.exit(0)

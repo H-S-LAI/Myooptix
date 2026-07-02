@@ -10,6 +10,27 @@ from PyQt6.QtWidgets import (
 )
 
 
+class _AppDownloadThread(QThread):
+    progress = pyqtSignal(int, int)
+    finished = pyqtSignal(str)   # path to downloaded zip
+    error    = pyqtSignal(str)
+
+    def __init__(self, tag: str):
+        super().__init__()
+        self._tag = tag
+
+    def run(self):
+        try:
+            from updater import download_app_update
+            dest = download_app_update(
+                self._tag,
+                progress_cb=lambda r, t: self.progress.emit(r, t),
+            )
+            self.finished.emit(str(dest))
+        except Exception as exc:
+            self.error.emit(str(exc))
+
+
 class _DownloadThread(QThread):
     progress = pyqtSignal(int, int)  # received, total
     finished = pyqtSignal()
@@ -101,7 +122,7 @@ class UpdateAvailableDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Update Available")
         self.setFixedSize(480, 300)
-        self._url = info.get("url", "")
+        self._info = info
         self._build(info)
 
     def _build(self, info: dict):
@@ -116,20 +137,65 @@ class UpdateAvailableDialog(QDialog):
         notes.setPlainText(info.get("body", "(No release notes)"))
         lay.addWidget(notes)
 
+        self._bar = QProgressBar()
+        self._bar.setRange(0, 100)
+        self._bar.setVisible(False)
+        lay.addWidget(self._bar)
+
+        self._status = QLabel("")
+        self._status.setVisible(False)
+        lay.addWidget(self._status)
+
         btn_row = QHBoxLayout()
-        go_btn = QPushButton("Open Release Page")
-        go_btn.setProperty("primary", True)
-        go_btn.style().unpolish(go_btn)
-        go_btn.style().polish(go_btn)
-        go_btn.clicked.connect(self._open)
+        self._dl_btn = QPushButton("Download Update")
+        self._dl_btn.setProperty("primary", True)
+        self._dl_btn.style().unpolish(self._dl_btn)
+        self._dl_btn.style().polish(self._dl_btn)
+        self._dl_btn.clicked.connect(self._start_download)
 
         later_btn = QPushButton("Later")
         later_btn.clicked.connect(self.reject)
 
-        btn_row.addWidget(go_btn)
+        btn_row.addWidget(self._dl_btn)
         btn_row.addWidget(later_btn)
         lay.addLayout(btn_row)
 
-    def _open(self):
-        webbrowser.open(self._url)
+    def _start_download(self):
+        self._dl_btn.setEnabled(False)
+        self._bar.setVisible(True)
+        self._status.setVisible(True)
+        self._status.setText("Connecting…")
+        self._thread = _AppDownloadThread(self._info["tag"])
+        self._thread.progress.connect(self._on_progress)
+        self._thread.finished.connect(self._on_finished)
+        self._thread.error.connect(self._on_error)
+        self._thread.start()
+
+    def _on_progress(self, received: int, total: int):
+        mb = received / 1_048_576
+        if total > 0:
+            self._bar.setValue(int(received / total * 100))
+            self._status.setText(f"Downloading…  {mb:.1f} / {total/1_048_576:.0f} MB")
+        else:
+            self._status.setText(f"Downloading…  {mb:.1f} MB")
+
+    def _on_finished(self, path: str):
+        self._bar.setValue(100)
+        import platform, subprocess
+        if platform.system() == "Darwin":
+            subprocess.Popen(["open", "-R", path])  # reveal in Finder
+        QMessageBox.information(
+            self, "Download Complete",
+            f"New version downloaded to your Desktop:\n{path}\n\n"
+            "Please:\n"
+            "1. Close this app\n"
+            "2. Open the zip and replace the old MyoOptix.app\n"
+            "3. Relaunch"
+        )
         self.accept()
+
+    def _on_error(self, msg: str):
+        QMessageBox.critical(self, "Download failed", msg)
+        self._dl_btn.setEnabled(True)
+        self._bar.setVisible(False)
+        self._status.setVisible(False)
