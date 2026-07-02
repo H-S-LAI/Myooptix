@@ -20,6 +20,14 @@ After appending, commit and push so the other side can pull and see.
 - Created `myooptix.spec` (PyInstaller spec, not yet tested)
 - Validated cross-platform output: BPM/HRV identical, Contractility ≤2.5% diff (normal)
 
+## 2026-07-02 Mac — Auto-update + Packaging
+
+- Built `MyoOptix.app` with PyInstaller (`myooptix_mac.spec`) — 791 MB
+- Added `download_app_update()` to `updater.py`: downloads platform zip to Desktop
+- `dialog_update.py`: UpdateAvailableDialog now auto-downloads instead of opening browser
+- `main.py`: checks for update on every launch (silent if no network, timeout 5s)
+- Update flow: launch → detect new version → Download button → zip saved to Desktop → user replaces old .app
+
 ## 2026-07-02 Mac — Algorithm + Analysis
 
 - Integrated PCA as default axis selection (`mdp.py`: `select_dominant_signal()`)
