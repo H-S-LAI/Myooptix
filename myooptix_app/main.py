@@ -9,6 +9,7 @@ os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 from ui.style import APP_STYLE
 from ui.main_window import MainWindow
 from ui.dialog_welcome import WelcomeDialog
+import updater
 
 CONFIG_PATH = Path(__file__).parent.parent / "config.json"
 
@@ -31,6 +32,11 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MyoOptix")
     app.setStyleSheet(APP_STYLE)
+
+    # Check for U-Net weights on first launch
+    if not updater.weights_exist():
+        from ui.dialog_update import ModelDownloadDialog
+        ModelDownloadDialog().exec()  # user can skip; Otsu will be used instead
 
     welcome = WelcomeDialog()
     if welcome.exec() != WelcomeDialog.DialogCode.Accepted:
