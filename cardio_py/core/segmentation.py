@@ -9,22 +9,14 @@ Method B: U-Net deep learning (ResNet-34 encoder, trained on 73 annotated frames
 Ported from predictMyocardiumUNet.m / ExternalLab_Inference_v1.m
 """
 
-import sys
 import numpy as np
 import cv2
 from pathlib import Path
 from scipy.ndimage import binary_fill_holes
 from skimage.measure import label
 
-
-def _resolve_weights() -> Path:
-    if getattr(sys, "frozen", False):
-        # PyInstaller: weights live next to the .exe, not inside the bundle
-        return Path(sys.executable).parent / "annotation_tool" / "best_model.pth"
-    return Path(__file__).parent.parent.parent / "annotation_tool" / "best_model.pth"
-
-
-_UNET_WEIGHTS = _resolve_weights()
+# Path to bundled U-Net weights (relative to this file)
+_UNET_WEIGHTS = Path(__file__).parent.parent.parent / "annotation_tool" / "best_model.pth"
 
 # ImageNet normalisation constants (must match training)
 _IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)

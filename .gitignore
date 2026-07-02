@@ -1,37 +1,34 @@
 # Python
-__pycache__/
-*.py[cod]
-*.pyo
-
-# Virtual environments
 .venv/
 .venv_win/
-venv/
-env/
+__pycache__/
+*.py[cod]
+*.pth
 
-# App data / outputs
-config.json
-compute_settings.json
-*/_pkl_for_review/
-*/final_excel_exports/
-*/_Merged_Reports/
+# Data & analysis output (large, not tracked)
 Analysis_*/
-project_*/
+Ctrl/
+202260413_7.6.0_Bugfix/
+_archive/
+golden_standard.mat
+golden_tracking.mat
+synthetic_organoid.mp4
+synthetic_frames.png
+synthetic_gt.pkl
+*.pkl
+*.mat
 
-# Model weights (distributed via GitHub Releases)
-annotation_tool/best_model.pth
+# Temp / scratch
+*.png
+*.DS_Store
+config.json
+memory/
 
-# macOS
-.DS_Store
-._*
-
-# Windows
-Thumbs.db
-
-# PyInstaller build output
-myooptix_app/build/
-myooptix_app/dist/
-
-# IDE
-.vscode/
-.idea/
+# Test scripts
+test_contractility_sensitivity.py
+after_*.png
+before_*.png
+all6roi_perdist.png
+contractility_sensitivity.png
+feature_points_distribution.png
+synthetic_validation.png
