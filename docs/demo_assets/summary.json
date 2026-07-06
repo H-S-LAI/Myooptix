@@ -1,0 +1,31 @@
+{
+  "rois": [
+    {
+      "roi": 1,
+      "bpm": 23,
+      "beats": 23,
+      "ibi_avg_ms": 1375.6,
+      "hrv_ms": NaN,
+      "contractility_mean": 64.9,
+      "color": "#58a6ff"
+    },
+    {
+      "roi": 2,
+      "bpm": 31,
+      "beats": 31,
+      "ibi_avg_ms": 994.3,
+      "hrv_ms": NaN,
+      "contractility_mean": 76.6,
+      "color": "#3fb950"
+    },
+    {
+      "roi": 3,
+      "bpm": 18,
+      "beats": 18,
+      "ibi_avg_ms": 1756.7,
+      "hrv_ms": NaN,
+      "contractility_mean": 81.1,
+      "color": "#e85c7a"
+    }
+  ]
+}
