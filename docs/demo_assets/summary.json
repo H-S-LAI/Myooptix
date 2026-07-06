@@ -7,7 +7,7 @@
       "ibi_avg_ms": 1375.6,
       "hrv_ms": NaN,
       "contractility_mean": 64.9,
-      "color": "#58a6ff"
+      "color": "#1e3a8a"
     },
     {
       "roi": 2,
@@ -16,7 +16,7 @@
       "ibi_avg_ms": 994.3,
       "hrv_ms": NaN,
       "contractility_mean": 76.6,
-      "color": "#3fb950"
+      "color": "#3558b8"
     },
     {
       "roi": 3,
@@ -25,7 +25,7 @@
       "ibi_avg_ms": 1756.7,
       "hrv_ms": NaN,
       "contractility_mean": 81.1,
-      "color": "#e85c7a"
+      "color": "#c25c4e"
     }
   ]
 }

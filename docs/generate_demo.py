@@ -25,7 +25,7 @@ with open(PKL, "rb") as f:
 frame_rgb = d["frame_rgb"]          # (H, W, 3)
 roi_list  = d["roi_list"]
 
-COLORS = ["#58a6ff", "#3fb950", "#e85c7a"]   # blue / green / red per ROI
+COLORS = ["#1e3a8a", "#3558b8", "#c25c4e"]   # navy / navy-light / red per ROI (palette B)
 
 # ── frame.jpg: first frame + ROI contours ────────────────────────────────────
 frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
@@ -44,52 +44,56 @@ cv2.imwrite(str(OUT / "frame.jpg"), frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, 88])
 print("Saved frame.jpg")
 
 # ── waveform.png: all 3 ROI signals stacked ──────────────────────────────────
-fig, axes = plt.subplots(3, 1, figsize=(9, 5), facecolor="#0d1117",
+CHART_BG  = "#f8f7f4"
+CHART_MUT = "#6b6f7d"
+CHART_SPL = "#dddbd5"
+
+fig, axes = plt.subplots(3, 1, figsize=(9, 5), facecolor=CHART_BG,
                          gridspec_kw={"hspace": 0.15})
 for i, (roi, ax) in enumerate(zip(roi_list, axes)):
     time   = roi["time"]
-    signal = roi.get("signal", roi.get("signal_x", np.array([])))
     mdp    = roi["mdp"]
     color  = COLORS[i]
+    signal = mdp.signal_display if len(mdp.signal_display) == len(time) else roi.get("signal", np.array([]))
 
-    ax.set_facecolor("#0d1117")
-    ax.plot(time, signal, color=color, linewidth=1.1, alpha=0.9)
+    ax.set_facecolor(CHART_BG)
+    ax.plot(time, signal, color=color, linewidth=1.2, alpha=0.9)
 
     if mdp.peak_locs is not None and len(mdp.peak_locs):
         pv = np.interp(mdp.peak_locs, time, signal)
-        ax.scatter(mdp.peak_locs, pv, color=color, s=18, zorder=5, alpha=0.8)
+        ax.scatter(mdp.peak_locs, pv, color=color, s=20, zorder=5, alpha=0.85)
 
-    ax.set_ylabel(f"ROI {i+1}", color="#8b949e", fontsize=8, labelpad=4)
-    ax.tick_params(colors="#8b949e", labelsize=7)
+    ax.set_ylabel(f"ROI {i+1}", color=CHART_MUT, fontsize=8, labelpad=4)
+    ax.tick_params(colors=CHART_MUT, labelsize=7)
     for spine in ax.spines.values():
-        spine.set_edgecolor("#21262d")
+        spine.set_edgecolor(CHART_SPL)
     if i < 2:
         ax.set_xticklabels([])
 
-axes[-1].set_xlabel("Time (s)", color="#8b949e", fontsize=8)
+axes[-1].set_xlabel("Time (s)", color=CHART_MUT, fontsize=8)
 fig.tight_layout(pad=0.6)
 fig.savefig(OUT / "waveform.png", dpi=130, facecolor=fig.get_facecolor())
 plt.close(fig)
 print("Saved waveform.png")
 
 # ── force.png: contractility traces ──────────────────────────────────────────
-fig, axes = plt.subplots(3, 1, figsize=(9, 4), facecolor="#0d1117",
+fig, axes = plt.subplots(3, 1, figsize=(9, 4), facecolor=CHART_BG,
                          gridspec_kw={"hspace": 0.15})
 for i, (roi, ax) in enumerate(zip(roi_list, axes)):
     time  = roi["time"]
     gtrace = roi.get("force", {}).get("global_trace")
     color  = COLORS[i]
-    ax.set_facecolor("#0d1117")
+    ax.set_facecolor(CHART_BG)
     if gtrace is not None and len(gtrace) == len(time):
-        ax.plot(time, gtrace, color=color, linewidth=1.0, alpha=0.9)
-    ax.set_ylabel(f"ROI {i+1}", color="#8b949e", fontsize=8, labelpad=4)
-    ax.tick_params(colors="#8b949e", labelsize=7)
+        ax.plot(time, gtrace, color=color, linewidth=1.1, alpha=0.9)
+    ax.set_ylabel(f"ROI {i+1}", color=CHART_MUT, fontsize=8, labelpad=4)
+    ax.tick_params(colors=CHART_MUT, labelsize=7)
     for spine in ax.spines.values():
-        spine.set_edgecolor("#21262d")
+        spine.set_edgecolor(CHART_SPL)
     if i < 2:
         ax.set_xticklabels([])
 
-axes[-1].set_xlabel("Time (s)", color="#8b949e", fontsize=8)
+axes[-1].set_xlabel("Time (s)", color=CHART_MUT, fontsize=8)
 fig.tight_layout(pad=0.6)
 fig.savefig(OUT / "force.png", dpi=130, facecolor=fig.get_facecolor())
 plt.close(fig)
