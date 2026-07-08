@@ -37,6 +37,28 @@ After appending, commit and push so the other side can pull and see.
 - **Asset naming note for future releases**: `updater.py` now expects `MyoOptix-win.zip` (Windows) and `MyoOptix-mac.zip` (Mac) — old `MyoOptix_v0.1.0_Windows.zip` naming is deprecated; next release must use the new names
 - Pushed: commit `18ee392`
 
+## 2026-07-08 Mac — Welcome UI + min_dist + toast system
+
+- `dialog_welcome.py`: subtitle font 11→14px, credit font 10→12px, window title cleared, size 440×420→520×460, credit split into 3 separate labels for clean alignment
+- `cardio_py/core/mdp.py`: all 4 function defaults `min_peak_distance_sec` 0.2→0.7 s
+- `myooptix_app/ui/tab_dashboard.py`: `min_dist` 0.2→0.7 in `_batch_compute`
+- `myooptix_app/ui/dialog_quick.py`: `'d'` and `'min_dist'` 0.2→0.7 in roi dict + params
+- `myooptix_app/ui/dialog_compute.py`: `min_dist` 0.2→0.7 in `_run()`
+
+## 2026-07-08 Mac — v0.3.0 Features + Packaging
+
+- Added `cardio_py/core/morphology.py`: `compute_mask_morphology()` computes equivalent diameter (µm) and area (µm²) from first-frame segmentation mask
+- `cardio_py/core/io.py`: added `Equivalent_Diameter_um` column to Excel analysis export
+- `cardio_py/core/mdp.py`: `min_peak_distance_sec` default 0.2 → 0.7 s
+- `myooptix_app/ui/toast.py` (new): shared toast notification widget; `duration=0` for loading toasts (no animation, shows immediately even during main-thread work)
+- Dashboard `refresh()` moved to `_ScanWorker` (QThread) — "Scanning…" toast now visible
+- Review export moved to `_ExportWorker` (QThread) — "Exporting…" toast now visible
+- `dialog_compute.py`: microscope presets (TCY_4X / TCY_10X), custom preset save, min_dist corrected to 0.7
+- `dialog_welcome.py`: subtitle 14px, credit 12px, window title cleared, size 520×460
+- `docs/index.html`: version badge updated to v0.3.0, Mac download link updated
+- Built `MyoOptix_v0.3.0_Mac.zip` (841 MB) via `myooptix_mac.spec`
+- Released: GitHub v0.3.0 tag, Mac ✅, Windows ⏳
+
 ## 2026-07-02 Mac — Algorithm + Analysis
 
 - Integrated PCA as default axis selection (`mdp.py`: `select_dominant_signal()`)

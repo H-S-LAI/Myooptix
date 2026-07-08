@@ -159,6 +159,9 @@ Status transitions written to `.json` sidecar only — never re-pickle BeatMetri
 |------|------|
 | `version.py` | 版本號 `VERSION = "x.y.z"` |
 | `RELEASE_STATUS.md` | 各平台打包狀態 ⏳ → ✅ |
+| `DEVLOG.md` | 本次改動摘要（格式：`## [date] [platform] — summary` + bullet points）|
+| `docs/index.html` | 版本 badge、Mac/Windows 下載連結更新至新版本號 |
+| `myooptix_app/myooptix_mac.spec` | `CFBundleShortVersionString` 更新 |
 
 ### 版本號規則
 - **patch** (0.x.**z**): bug fix、UI 微調
