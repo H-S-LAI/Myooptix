@@ -2,13 +2,35 @@
 Batch Compute dialog.
 """
 
+import json
+import os
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QDoubleSpinBox, QProgressBar,
-    QTextEdit, QFrame, QSizePolicy, QApplication, QWidget,
+    QTextEdit, QFrame, QSizePolicy, QApplication, QWidget, QComboBox,
+    QInputDialog, QMessageBox,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
+
+_PRESETS_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "presets.json")
+
+
+def _load_presets():
+    try:
+        with open(_PRESETS_PATH) as f:
+            return json.load(f)["presets"]
+    except Exception:
+        return [{"name": "TCY_4X", "scale": 2.915}, {"name": "TCY_10X", "scale": 1.175}]
+
+
+def _save_presets(presets):
+    try:
+        with open(_PRESETS_PATH, "w") as f:
+            json.dump({"presets": presets}, f, indent=2)
+    except Exception:
+        pass
 
 
 def _spinrow(parent_lay, label, value, mn, mx, step, decimals, width=160):
@@ -36,18 +58,26 @@ class ComputeDialog(QDialog):
         self._worker      = None
         self._preview_idx = 0
 
+        self._presets = _load_presets()
+
         self.setWindowTitle("Batch Compute")
-        self.setMinimumWidth(520)
+        self.setMinimumWidth(480)
         self._build_ui()
         self._load_settings()
         self.adjustSize()
+
+    def _refresh_combo(self):
+        self._combo_preset.blockSignals(True)
+        self._combo_preset.clear()
+        for p in self._presets:
+            self._combo_preset.addItem(f"{p['name']}  ({p['scale']} µm/px)")
+        self._combo_preset.blockSignals(False)
 
     def _settings_path(self):
         import os
         return os.path.join(self.project_root, "compute_settings.json")
 
     def _load_settings(self):
-        import json, os
         p = self._settings_path()
         if not os.path.exists(p):
             return
@@ -62,7 +92,23 @@ class ComputeDialog(QDialog):
             if "max_pct" in s:
                 self._spin_max_pct.setValue(s["max_pct"])
             if "scale" in s:
-                self._spin_scale.setValue(s["scale"])
+                loaded = s["scale"]
+                # try to match a preset
+                matched = False
+                for i, preset in enumerate(self._presets):
+                    if abs(preset["scale"] - loaded) < 0.001:
+                        self._combo_preset.setCurrentIndex(i)
+                        matched = True
+                        break
+                if not matched:
+                    self._spin_scale.blockSignals(True)
+                    self._spin_scale.setValue(loaded)
+                    self._spin_scale.blockSignals(False)
+                    self._spin_scale.setEnabled(True)
+                    self._combo_preset.blockSignals(True)
+                    self._combo_preset.setCurrentIndex(-1)
+                    self._combo_preset.blockSignals(False)
+                    self._preset_hint.setVisible(True)
         except Exception:
             pass
 
@@ -110,7 +156,7 @@ class ComputeDialog(QDialog):
         rb_col.addWidget(self._rb_unet)
         radio_row.addLayout(rb_col)
         radio_row.addStretch()
-        self._preview_btn = QPushButton("🔍  Preview")
+        self._preview_btn = QPushButton("Preview")
         self._preview_btn.setFixedSize(110, 30)
         self._preview_btn.setCheckable(True)
         self._preview_btn.toggled.connect(self._toggle_preview)
@@ -177,10 +223,21 @@ class ComputeDialog(QDialog):
 
         root.addWidget(self._divider())
 
-        # ── Scale ──
+        # ── Scale / Preset ──
         scale_lbl = QLabel("Analysis parameters")
         scale_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
         root.addWidget(scale_lbl)
+
+        # Row 1: preset combo
+        preset_row = QHBoxLayout()
+        preset_lbl = QLabel("Microscope preset")
+        preset_lbl.setFixedWidth(160)
+        self._combo_preset = QComboBox()
+        preset_row.addWidget(preset_lbl)
+        preset_row.addWidget(self._combo_preset, 1)
+        root.addLayout(preset_row)
+
+        # Row 2: scale spinbox + save button inline
         scale_row = QHBoxLayout()
         lbl = QLabel("Scale (µm/pixel)")
         lbl.setFixedWidth(160)
@@ -189,9 +246,64 @@ class ComputeDialog(QDialog):
         self._spin_scale.setSingleStep(0.001)
         self._spin_scale.setDecimals(6)
         self._spin_scale.setValue(self._scale)
+        self._add_preset_btn = QPushButton("+ Save")
+        self._add_preset_btn.setToolTip("Save current scale as a new preset")
+        self._add_preset_btn.setFixedSize(72, 28)
         scale_row.addWidget(lbl)
-        scale_row.addWidget(self._spin_scale)
+        scale_row.addWidget(self._spin_scale, 1)
+        scale_row.addSpacing(6)
+        scale_row.addWidget(self._add_preset_btn)
         root.addLayout(scale_row)
+
+        # hint label
+        self._preset_hint = QLabel("Unsaved — press Save preset to keep this value")
+        self._preset_hint.setStyleSheet("font-size: 10px; color: #9a9080; padding-left: 164px;")
+        self._preset_hint.setVisible(False)
+        root.addWidget(self._preset_hint)
+
+        self._refresh_combo()
+
+        def _on_preset(idx):
+            if idx < 0 or idx >= len(self._presets):
+                return
+            val = self._presets[idx]["scale"]
+            self._spin_scale.blockSignals(True)
+            self._spin_scale.setValue(val)
+            self._spin_scale.blockSignals(False)
+            self._preset_hint.setVisible(False)
+
+        def _on_scale_edited():
+            self._combo_preset.blockSignals(True)
+            self._combo_preset.setCurrentIndex(-1)
+            self._combo_preset.blockSignals(False)
+            self._preset_hint.setVisible(True)
+
+        self._combo_preset.currentIndexChanged.connect(_on_preset)
+        self._spin_scale.valueChanged.connect(_on_scale_edited)
+
+        def _add_preset():
+            val = self._spin_scale.value()
+            name, ok = QInputDialog.getText(
+                self, "Save Preset", "Preset name:", text=f"Custom_{val:.3f}")
+            if not ok or not name.strip():
+                return
+            name = name.strip()
+            # replace if same name exists
+            self._presets = [p for p in self._presets if p["name"] != name]
+            self._presets.append({"name": name, "scale": val})
+            _save_presets(self._presets)
+            self._refresh_combo()
+            # select newly added
+            for i, p in enumerate(self._presets):
+                if p["name"] == name:
+                    self._combo_preset.setCurrentIndex(i)
+                    break
+
+        self._add_preset_btn.clicked.connect(_add_preset)
+
+        # init: select TCY_4X by default (index 0)
+        self._combo_preset.setCurrentIndex(0)
+        _on_preset(0)
 
         root.addWidget(self._divider())
 
@@ -249,7 +361,7 @@ class ComputeDialog(QDialog):
 
     def _toggle_preview(self, checked: bool):
         self._preview_body.setVisible(checked)
-        self._preview_btn.setText("🔍  Hide" if checked else "🔍  Preview")
+        self._preview_btn.setText("Hide preview" if checked else "Preview")
         if checked:
             self._run_preview(self._preview_idx)
         else:
@@ -367,7 +479,10 @@ class ComputeDialog(QDialog):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (40, 40, 40), 1)
             img = QImage(arr.tobytes(), ow, oh, ow * 3, QImage.Format.Format_RGB888)
             max_w = self.width() - 56
-            scale = max_w / ow
+            max_h = 200
+            scale_w = max_w / ow
+            scale_h = max_h / oh
+            scale = min(scale_w, scale_h)
             nw, nh = int(ow * scale), int(oh * scale)
             pix = QPixmap.fromImage(img).scaled(nw, nh, Qt.AspectRatioMode.KeepAspectRatio,
                                                 Qt.TransformationMode.SmoothTransformation)

@@ -99,7 +99,7 @@ class _QuickWorker(QThread):
 
             # ── KLT tracking ─────────────────────────────────────────────────
             self.stage.emit(f"KLT tracking  ({len(masks)} ROI(s))…")
-            scale = 10000 / 1530
+            scale = 2.915  # TCY_4X default
             results = track_video(self.video_path, masks, scale_um_per_px=scale)
 
             # ── MDP + force per ROI ──────────────────────────────────────────

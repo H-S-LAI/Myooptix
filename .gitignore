@@ -20,6 +20,8 @@ synthetic_gt.pkl
 
 # Temp / scratch
 *.png
+!docs/icon.png
+!docs/demo_assets/*.png
 *.DS_Store
 config.json
 memory/

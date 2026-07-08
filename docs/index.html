@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MyoOptix &#8212; Cardiac Organoid Motion Analysis</title>
+  <link rel="icon" type="image/png" href="icon.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -38,7 +39,7 @@
       position: sticky; top: 0;
       background: #f2f1eee8; backdrop-filter: blur(10px); z-index: 20;
     }
-    header svg { width: 26px; height: 26px; flex-shrink: 0; }
+    header img.logo-icon { width: 28px; height: 28px; flex-shrink: 0; border-radius: 7px; }
     .logo { font-size: 1.05rem; font-weight: 700; }
     header nav { margin-left: auto; display: flex; gap: 24px; }
     header nav a { color: var(--muted); text-decoration: none; font-size: .85rem; transition: color .15s; }
@@ -219,6 +220,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
+      align-items: stretch;
     }
     .team-card {
       background: var(--surf); border: 1px solid var(--border);
@@ -228,6 +230,7 @@
     .team-role {
       font-size: .68rem; font-weight: 700; letter-spacing: 1.2px;
       text-transform: uppercase; color: var(--blue);
+      min-height: 2em;
     }
     .team-name {
       font-size: 1rem; font-weight: 700; line-height: 1.4;
@@ -271,9 +274,7 @@
 
 <!-- ── HEADER ── -->
 <header>
-  <svg viewBox="0 0 24 24" fill="none">
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#e85c7a"/>
-  </svg>
+  <img class="logo-icon" src="icon.png" alt="MyoOptix icon">
   <span class="logo">MyoOptix</span>
   <nav>
     <a href="#demo">Demo</a>
@@ -285,11 +286,11 @@
 
 <!-- ── HERO ── -->
 <section class="hero">
+  <img src="icon.png" alt="MyoOptix" style="width:96px;height:96px;border-radius:22px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);display:block;margin-left:auto;margin-right:auto;">
+  <h1>MyoOptix</h1>
   <div class="badge">v0.2.0 &#8212; Latest Release</div>
-  <h1>Cardiac Organoid<br>Motion Analysis</h1>
   <p class="subtitle">
-    Automated beating analysis for cardiac organoid videos.<br>
-    Outputs BPM, HRV, and contractility &#8212; no Python required.
+    Automated video analysis for cardiac organoids. Quantifies beating rate, rhythm variability, and contractility from brightfield recordings.
   </p>
   <div class="buttons">
     <a id="btn-win" class="btn btn-primary" href="https://github.com/H-S-LAI/Myooptix/releases/download/v0.2.0/MyoOptix-win.zip">
@@ -437,7 +438,12 @@
 <section id="about">
   <div class="team-grid">
     <div class="team-card">
-      <p class="team-role">Principal Investigator</p>
+      <p class="team-role">Grant Principal Investigator</p>
+      <p class="team-name">李岡遠 教授<br><span class="team-name-zh">Lee, Kang-Yun</span></p>
+      <p class="team-dept">Division of Pulmonary Medicine<br>School of Medicine<br>Taipei Medical University</p>
+    </div>
+    <div class="team-card">
+      <p class="team-role">Lab Director</p>
       <p class="team-name">楊添鈞 助理教授<br><span class="team-name-zh">Yang, Tien-Chun</span></p>
       <p class="team-dept">Department of Anatomy and Cell Biology<br>College of Medicine<br>Taipei Medical University</p>
     </div>
@@ -459,8 +465,12 @@
 </section>
 
 <footer>
-  MyoOptix &nbsp;&middot;&nbsp; 賴竑劭 &nbsp;&middot;&nbsp; Taipei Medical University &nbsp;&middot;&nbsp;
+  &copy; 2026 MyoOptix &nbsp;&middot;&nbsp; 賴竑劭 &nbsp;&middot;&nbsp; Taipei Medical University &nbsp;&middot;&nbsp;
   <a href="mailto:b101110099@tmu.edu.tw">b101110099@tmu.edu.tw</a>
+  <br style="line-height:2">
+  <span style="font-size:.8em; opacity:.65;">
+    Supported by NSTC 114-2640-B-038-001 &mdash; AI輔助與即時感測回饋之免疫藥物毒性分析晶片
+  </span>
 </footer>
 
 <script>

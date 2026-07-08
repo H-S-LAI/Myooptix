@@ -359,7 +359,7 @@ class DashboardTab(QWidget):
             return
         project_root = str(Path(self._video_root) / self._project_name)
         settings_path = Path(project_root) / "compute_settings.json"
-        default_scale = 10000 / 1530
+        default_scale = 2.915  # TCY_4X default
         if settings_path.exists():
             try:
                 s = json.loads(settings_path.read_text())

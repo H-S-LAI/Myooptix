@@ -1,0 +1,6 @@
+{
+  "presets": [
+    {"name": "TCY_4X",  "scale": 2.915},
+    {"name": "TCY_10X", "scale": 1.175}
+  ]
+}

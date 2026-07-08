@@ -1,8 +1,10 @@
+import os
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame,
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
 
 
 class WelcomeDialog(QDialog):
@@ -13,7 +15,7 @@ class WelcomeDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("MyoOptix")
-        self.setFixedSize(420, 320)
+        self.setFixedSize(440, 420)
         self.setWindowFlags(Qt.WindowType.Dialog)
         self.mode = None
         self._build_ui()
@@ -26,11 +28,22 @@ class WelcomeDialog(QDialog):
         root.setContentsMargins(40, 36, 40, 32)
         root.setSpacing(10)
 
+        # icon
+        icon_lbl = QLabel()
+        icon_path = os.path.join(os.path.dirname(__file__), "..", "assets", "icon.png")
+        pix = QPixmap(icon_path)
+        if not pix.isNull():
+            pix.setDevicePixelRatio(2.0)
+            icon_lbl.setPixmap(pix.scaled(144, 144, Qt.AspectRatioMode.KeepAspectRatio,
+                                          Qt.TransformationMode.SmoothTransformation))
+        icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(icon_lbl)
+
         title = QLabel("MyoOptix")
-        title.setStyleSheet("font-size: 30px; font-weight: bold; color: #3b3a32;")
+        title.setStyleSheet("font-size: 26px; font-weight: bold; color: #3b3a32;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub = QLabel("Cardiac Organoid Motion Analysis")
-        sub.setStyleSheet("font-size: 12px; color: #8a8070;")
+        sub.setStyleSheet("font-size: 11px; color: #8a8070;")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.addWidget(title)
         root.addWidget(sub)
@@ -39,6 +52,15 @@ class WelcomeDialog(QDialog):
         line.setFrameShape(QFrame.Shape.HLine)
         line.setStyleSheet("color: #d6cfc2;")
         root.addWidget(line)
+
+        grant_lbl = QLabel(
+            "Supported by 國家科學及技術委員會 補助專題研究計畫\n"
+            "AI輔助與即時感測回饋之免疫藥物毒性分析晶片 NSTC 114-2640-B-038-001\n"
+            "Grant PI: 李岡遠　Lab Director: 楊添鈞　Developer: 賴竑劭"
+        )
+        grant_lbl.setStyleSheet("font-size: 10px; color: #9a9080;")
+        grant_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(grant_lbl)
 
         root.addStretch()
 

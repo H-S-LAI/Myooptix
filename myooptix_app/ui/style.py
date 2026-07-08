@@ -4,7 +4,7 @@ QMainWindow, QDialog, QWidget {
     background-color: #f5f0e8;
     color: #3b3a32;
     font-family: "Segoe UI", -apple-system, sans-serif;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 /* ── Menu / toolbar ── */
@@ -66,12 +66,34 @@ QLineEdit:focus, QComboBox:focus, QTextEdit:focus {
     border-color: #7c9c6e;
     background-color: #ffffff;
 }
-QComboBox::drop-down { border: none; width: 20px; }
+QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+QComboBox::down-arrow {
+    image: url("__ARROW_DOWN__");
+    width: 10px;
+    height: 6px;
+}
 QComboBox QAbstractItemView {
     background-color: #faf7f2;
     selection-background-color: #d6cfc2;
     border: 1px solid #c8c0b0;
     color: #3b3a32;
+    padding: 4px;
+}
+
+QDoubleSpinBox::up-button, QSpinBox::up-button,
+QDoubleSpinBox::down-button, QSpinBox::down-button {
+    width: 0;
+    border: none;
+}
+QDoubleSpinBox::up-arrow, QSpinBox::up-arrow {
+    width: 0; height: 0;
+}
+QDoubleSpinBox::down-arrow, QSpinBox::down-arrow {
+    width: 0; height: 0;
+    height: 5px;
 }
 
 /* ── Table ── */
@@ -138,7 +160,7 @@ QGroupBox {
     padding: 10px 12px 8px 12px;
     background-color: #faf7f2;
     color: #6b6456;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: bold;
 }
 QGroupBox::title {
@@ -178,8 +200,9 @@ QDialog {
 
 /* ── Radio buttons (explicit indicator needed on Windows) ── */
 QRadioButton {
-    spacing: 6px;
+    spacing: 8px;
     color: #3b3a32;
+    padding: 3px 0;
 }
 QRadioButton::indicator {
     width: 14px;
@@ -204,15 +227,24 @@ QLabel[heading="true"] {
 }
 QLabel[subtitle="true"] {
     color: #8a8070;
-    font-size: 11px;
+    font-size: 12px;
 }
 QLabel[stat_value="true"] {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: bold;
     color: #7c9c6e;
 }
 QLabel[stat_label="true"] {
-    font-size: 11px;
+    font-size: 12px;
     color: #8a8070;
 }
 """
+
+
+def build_style(assets_dir: str) -> str:
+    import os
+    arrow_down = os.path.join(assets_dir, "arrow_down.svg").replace("\\", "/")
+    arrow_up   = os.path.join(assets_dir, "arrow_up.svg").replace("\\", "/")
+    return (APP_STYLE
+            .replace("__ARROW_DOWN__", arrow_down)
+            .replace("__ARROW_UP__",   arrow_up))

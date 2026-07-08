@@ -698,7 +698,9 @@ class ReviewDialog(QDialog):
         if ans != QMessageBox.StandardButton.Yes:
             return
         roi_list.pop(self._roi_idx)
-        self._roi_idx = max(0, self._roi_idx - 1)
+        for new_idx, roi in enumerate(roi_list, start=1):
+            roi['roi_index'] = new_idx
+        self._roi_idx = min(self._roi_idx, len(roi_list) - 1) if roi_list else 0
         with open(self._pkl_path, 'wb') as f:
             pickle.dump(self._data, f)
         self._populate_roi_combo()
