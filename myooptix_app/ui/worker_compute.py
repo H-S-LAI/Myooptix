@@ -28,6 +28,7 @@ def _compute_one(video_path, masks, scale_um_per_px, k_mult, min_dist, stage_cb=
     from cardio_py.core.tracking import track_video
     from cardio_py.core.mdp import calculate_mdp_metrics, select_dominant_signal
     from cardio_py.core.force import compute_contractility
+    from cardio_py.core.morphology import compute_mask_morphology
 
     if stage_cb:
         stage_cb("KLT tracking…")
@@ -40,6 +41,7 @@ def _compute_one(video_path, masks, scale_um_per_px, k_mult, min_dist, stage_cb=
         signal, axis = select_dominant_signal(r.signal_x, r.signal_y, r.time, k_mult, min_dist)
         mdp    = calculate_mdp_metrics(signal, r.time, k_mult, min_dist)
         force  = compute_contractility(r.signal_mag, r.time, r.frame_rate, mdp.peak_locs)
+        morph  = compute_mask_morphology(masks[i], scale_um_per_px)
         roi_list.append({
             'roi_index':     i + 1,
             'dominant_axis': axis,
@@ -52,6 +54,7 @@ def _compute_one(video_path, masks, scale_um_per_px, k_mult, min_dist, stage_cb=
             'mdp':            mdp,
             'force':          force,
             'mask':           masks[i],
+            'morphology':     morph,
             'k':              k_mult,
             'd':              min_dist,
         })

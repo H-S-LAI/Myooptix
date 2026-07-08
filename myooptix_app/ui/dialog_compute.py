@@ -5,6 +5,8 @@ Batch Compute dialog.
 import json
 import os
 
+from .toast import Toast
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QDoubleSpinBox, QProgressBar,
@@ -446,7 +448,7 @@ class ComputeDialog(QDialog):
             seg_method=seg_method,
             scale=self._spin_scale.value(),
             k_mult=1.0,
-            min_dist=0.2,
+            min_dist=0.7,
             otsu_min_pct=self._spin_min_pct.value(),
             otsu_max_pct=self._spin_max_pct.value(),
             parent=self,
@@ -457,6 +459,7 @@ class ComputeDialog(QDialog):
         self._worker.error.connect(self._on_error)
         self._worker.finished.connect(self._on_finished)
         self.run_btn.setEnabled(False)
+        self._loading_toast = Toast("Computing…", self, kind="loading", duration=0)
         self._worker.start()
 
     def _on_progress(self, current, total, stem):
@@ -493,9 +496,15 @@ class ComputeDialog(QDialog):
 
     def _on_error(self, stem, msg):
         self.log.append(f"✗  {stem}  —  {msg}")
+        if hasattr(self, '_loading_toast'):
+            self._loading_toast.deleteLater()
+        Toast(f"Error: {stem}", self, kind="error")
 
     def _on_finished(self):
         self.status_lbl.setText("All done.")
+        if hasattr(self, '_loading_toast'):
+            self._loading_toast.deleteLater()
+        Toast(f"All {len(self.video_paths)} video(s) computed", self, kind="success", duration=3000)
         self.run_btn.setText("Close")
         self.run_btn.setEnabled(True)
         self.run_btn.clicked.disconnect()

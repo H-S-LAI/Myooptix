@@ -126,6 +126,9 @@ def export_analysis_excel(
             fv = force['force_vals']
             c_std = float(np.nanstd(fv)) if len(fv) > 1 else float('nan')
 
+            morph = r.get('morphology', {})
+            diam_um = morph.get('equivalent_diameter_um', float('nan'))
+
             rows = []
             for k in range(n_peaks):
                 st_val  = float(mdp.ST[k])        if k < len(mdp.ST)        else float('nan')
@@ -146,6 +149,7 @@ def export_analysis_excel(
                     'Interbeatsegment_s':         ib_val,
                     'Contractility_Mag_um_s':    f_val,
                     'Contractility_Std_um_s':    c_std,
+                    'Equivalent_Diameter_um':    diam_um,
                 })
 
             pd.DataFrame(rows).to_excel(w_an, sheet_name=sheet, index=False)

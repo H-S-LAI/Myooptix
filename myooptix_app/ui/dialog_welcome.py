@@ -14,8 +14,8 @@ class WelcomeDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("MyoOptix")
-        self.setFixedSize(440, 420)
+        self.setWindowTitle("")
+        self.setFixedSize(520, 460)
         self.setWindowFlags(Qt.WindowType.Dialog)
         self.mode = None
         self._build_ui()
@@ -43,7 +43,7 @@ class WelcomeDialog(QDialog):
         title.setStyleSheet("font-size: 26px; font-weight: bold; color: #3b3a32;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub = QLabel("Cardiac Organoid Motion Analysis")
-        sub.setStyleSheet("font-size: 11px; color: #8a8070;")
+        sub.setStyleSheet("font-size: 14px; color: #8a8070;")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.addWidget(title)
         root.addWidget(sub)
@@ -53,14 +53,17 @@ class WelcomeDialog(QDialog):
         line.setStyleSheet("color: #d6cfc2;")
         root.addWidget(line)
 
-        grant_lbl = QLabel(
-            "Supported by 國家科學及技術委員會 補助專題研究計畫\n"
-            "AI輔助與即時感測回饋之免疫藥物毒性分析晶片 NSTC 114-2640-B-038-001\n"
-            "Grant PI: 李岡遠　Lab Director: 楊添鈞　Developer: 賴竑劭"
-        )
-        grant_lbl.setStyleSheet("font-size: 10px; color: #9a9080;")
-        grant_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        root.addWidget(grant_lbl)
+        _gs = "font-size: 12px; color: #9a9080; background: transparent;"
+        for text in (
+            "Supported by 國家科學及技術委員會 補助專題研究計畫",
+            "AI輔助與即時感測回饋之免疫藥物毒性分析晶片  NSTC 114-2640-B-038-001",
+            "Grant PI: 李岡遠　Lab Director: 楊添鈞　Developer: 賴竑劭",
+        ):
+            lbl = QLabel(text)
+            lbl.setStyleSheet(_gs)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setWordWrap(False)
+            root.addWidget(lbl)
 
         root.addStretch()
 

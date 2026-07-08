@@ -216,7 +216,7 @@ def calculate_mdp_metrics(
     signal: np.ndarray,
     time: np.ndarray,
     k_multiplier: float = 1.0,
-    min_peak_distance_sec: float = 0.2,
+    min_peak_distance_sec: float = 0.7,
 ) -> BeatMetrics:
     """
     Full MDP analysis for one signal (X or Y axis velocity).
@@ -282,7 +282,7 @@ def evaluate_signal_mdp(
     signal: np.ndarray,
     time: np.ndarray,
     k_multiplier: float = 1.0,
-    min_peak_distance_sec: float = 0.2,
+    min_peak_distance_sec: float = 0.7,
 ) -> dict:
     """
     Quick evaluation for axis selection (X vs Y).
@@ -304,7 +304,7 @@ def select_dominant_axis(
     signal_y: np.ndarray,
     time: np.ndarray,
     k_multiplier: float = 1.0,
-    min_peak_distance_sec: float = 0.2,
+    min_peak_distance_sec: float = 0.7,
 ) -> str:
     """
     Pick the axis (X or Y) with more stable beat rhythm (lower IBI std).
@@ -349,7 +349,7 @@ def select_dominant_signal(
     signal_y: np.ndarray,
     time: np.ndarray,
     k_multiplier: float = 1.0,
-    min_peak_distance_sec: float = 0.2,
+    min_peak_distance_sec: float = 0.7,
     method: str = "pca",
 ) -> tuple[np.ndarray, str]:
     """

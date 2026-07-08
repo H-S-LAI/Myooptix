@@ -196,25 +196,45 @@ def _export_summary_images(stem: str, roi_list: list, frame_rgb, out_dir: Path):
         plt.close(fig)
 
 
-# ── Toast notification ───────────────────────────────────────────────────────
+from PyQt6.QtCore import QThread
+from .toast import Toast as _Toast
 
-class _Toast(QLabel):
-    def __init__(self, message: str, parent=None):
-        super().__init__(message, parent)
-        self.setStyleSheet(
-            "background: rgba(60,80,50,210); color: #ffffff; border-radius: 8px;"
-            "padding: 8px 18px; font-size: 12px; font-weight: bold;")
-        self.adjustSize()
-        self.setWindowFlags(Qt.WindowType.ToolTip)
-        # centre over parent
-        if parent:
-            pr = parent.geometry()
-            x = pr.x() + (pr.width()  - self.width())  // 2
-            y = pr.y() + pr.height() - self.height() - 60
-            self.move(x, y)
-        self.show()
-        QTimer.singleShot(2200, self.close)
 
+class _ExportWorker(QThread):
+    success = pyqtSignal(int)   # n_rois
+    error   = pyqtSignal(str)
+
+    def __init__(self, pkl_path, roi_list, frame_rgb, proj_root):
+        super().__init__()
+        self._pkl_path  = pkl_path
+        self._roi_list  = roi_list
+        self._frame_rgb = frame_rgb
+        self._proj_root = proj_root
+
+    def run(self):
+        import sys
+        if self._proj_root not in sys.path:
+            sys.path.insert(0, self._proj_root)
+        try:
+            from cardio_py.core.io import export_analysis_excel
+            from pathlib import Path
+            import json
+            stem    = Path(self._pkl_path).stem
+            out_dir = Path(self._pkl_path).parent.parent / "final_excel_exports"
+            out_dir.mkdir(exist_ok=True)
+            export_analysis_excel(str(out_dir / stem), self._roi_list, self._roi_list[0]['time'])
+            _export_summary_images(stem, self._roi_list, self._frame_rgb,
+                                   Path(self._pkl_path).parent.parent / "summary_images")
+            sidecar = Path(self._pkl_path).with_suffix('.json')
+            try:
+                meta = json.loads(sidecar.read_text()) if sidecar.exists() else {}
+            except Exception:
+                meta = {}
+            meta['status'] = 'Reviewed'
+            sidecar.write_text(json.dumps(meta, indent=2))
+            self.success.emit(len(self._roi_list))
+        except Exception as e:
+            self.error.emit(str(e))
 
 # ── Matplotlib canvas ────────────────────────────────────────────────────────
 
@@ -421,7 +441,8 @@ class ReviewDialog(QDialog):
                             ("ST",       "ST (ms)"),
                             ("DT",       "DT (ms)"),
                             ("Force",    "Force (µm/s)"),
-                            ("ForceStd", "Contractility Std")]:
+                            ("ForceStd", "Contractility Std"),
+                            ("Diameter", "Diameter (µm)")]:
             row = QHBoxLayout()
             lbl_w = QLabel(label)
             lbl_w.setStyleSheet("color: #6b6456; background: transparent; font-size: 11px;")
@@ -651,12 +672,18 @@ class ReviewDialog(QDialog):
         fstd = float(np.nanstd(force['force_vals'])) if len(force.get('force_vals', [])) > 1 else 0
         self._metric_labels["Force"].setText(f"{fmag:.2f}")
         self._metric_labels["ForceStd"].setText(f"{fstd:.2f}")
+        morph = roi.get('morphology', {})
+        diam  = morph.get('equivalent_diameter_um', float('nan'))
+        self._metric_labels["Diameter"].setText(f"{diam:.1f}" if diam == diam else "—")
 
     # ── Actions ──────────────────────────────────────────────────────────────
 
     def _recompute(self):
         if not self._data:
             return
+        from PyQt6.QtWidgets import QApplication
+        _t = _Toast("Recomputing…", self, kind="loading", duration=0)
+        QApplication.processEvents()
         proj_root = str(Path(__file__).parent.parent.parent)
         if proj_root not in sys.path:
             sys.path.insert(0, proj_root)
@@ -683,7 +710,10 @@ class ReviewDialog(QDialog):
             self._update_metrics()
             self._update_overlay()
             self._refresh_canvas()
+            _t.deleteLater()
+            _Toast(f"Recomputed  k={k_mult:.1f}  d={min_dist:.2f} s", self, kind="success")
         except Exception as e:
+            _t.deleteLater()
             QMessageBox.critical(self, "Recompute error", str(e))
 
     def _delete_roi(self):
@@ -711,41 +741,29 @@ class ReviewDialog(QDialog):
     def _export_and_review(self):
         if not self._data:
             return
+        roi_list  = self._data.get('roi_list', [])
+        frame_rgb = self._data.get('frame_rgb')
+        if not roi_list:
+            QMessageBox.warning(self, "No ROIs", "No ROI data to export.")
+            return
+
+        self._export_toast = _Toast("Exporting…", self, kind="loading", duration=0)
         proj_root = str(Path(__file__).parent.parent.parent)
-        if proj_root not in sys.path:
-            sys.path.insert(0, proj_root)
-        try:
-            from cardio_py.core.io import export_analysis_excel
-            roi_list  = self._data.get('roi_list', [])
-            frame_rgb = self._data.get('frame_rgb')
-            if not roi_list:
-                QMessageBox.warning(self, "No ROIs", "No ROI data to export.")
-                return
-            stem = Path(self._pkl_path).stem
 
-            # ── Excel ────────────────────────────────────────────────────────
-            out_dir = Path(self._pkl_path).parent.parent / "final_excel_exports"
-            out_dir.mkdir(exist_ok=True)
-            export_analysis_excel(str(out_dir / stem), roi_list, roi_list[0]['time'])
+        self._export_worker = _ExportWorker(self._pkl_path, roi_list, frame_rgb, proj_root)
+        self._export_worker.success.connect(self._on_export_done)
+        self._export_worker.error.connect(self._on_export_error)
+        self._export_worker.start()
 
-            # ── Summary PNGs (one per ROI) ───────────────────────────────────
-            _export_summary_images(stem, roi_list, frame_rgb,
-                                   Path(self._pkl_path).parent.parent / "summary_images")
+    def _on_export_done(self, n):
+        self._exported = True
+        self._export_toast.deleteLater()
+        _Toast(f"Saved {n} ROI(s) — Excel + summary images", self, kind="success")
+        QTimer.singleShot(2400, self.accept)
 
-            # ── Mark reviewed ────────────────────────────────────────────────
-            sidecar = Path(self._pkl_path).with_suffix('.json')
-            try:
-                meta = json.loads(sidecar.read_text()) if sidecar.exists() else {}
-            except Exception:
-                meta = {}
-            meta['status'] = 'Reviewed'
-            sidecar.write_text(json.dumps(meta, indent=2))
-            self._exported = True
-            n = len(roi_list)
-            _Toast(f"Saved {n} ROI summary image{'s' if n > 1 else ''} + Excel", self)
-            QTimer.singleShot(2400, self.accept)
-        except Exception as e:
-            QMessageBox.critical(self, "Export error", str(e))
+    def _on_export_error(self, msg):
+        self._export_toast.deleteLater()
+        QMessageBox.critical(self, "Export error", msg)
 
     def closeEvent(self, event):
         if not self._exported:

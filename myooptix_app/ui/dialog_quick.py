@@ -13,6 +13,8 @@ import sys
 import pickle
 from pathlib import Path
 
+from .toast import Toast
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QFrame, QFileDialog,
@@ -52,10 +54,11 @@ class _QuickWorker(QThread):
                 sys.path.insert(0, proj_root)
 
             import numpy as np
-            from cardio_py.core.io       import read_first_frame
-            from cardio_py.core.tracking import track_video
-            from cardio_py.core.mdp      import calculate_mdp_metrics, select_dominant_signal
-            from cardio_py.core.force    import compute_contractility
+            from cardio_py.core.io         import read_first_frame
+            from cardio_py.core.tracking   import track_video
+            from cardio_py.core.mdp        import calculate_mdp_metrics, select_dominant_signal
+            from cardio_py.core.force      import compute_contractility
+            from cardio_py.core.morphology import compute_mask_morphology
 
             vp   = Path(self.video_path)
             stem = vp.stem
@@ -117,6 +120,7 @@ class _QuickWorker(QThread):
 
                 mdp   = calculate_mdp_metrics(signal, time)
                 force = compute_contractility(signal_mag, time, frame_rate, mdp.peak_locs)
+                morph = compute_mask_morphology(masks[i], scale)
 
                 roi_list.append({
                     'roi_index':     i,
@@ -130,8 +134,9 @@ class _QuickWorker(QThread):
                     'mdp':           mdp,
                     'force':         force,
                     'mask':          masks[i],
+                    'morphology':    morph,
                     'k':             1.0,
-                    'd':             0.2,
+                    'd':             0.7,
                 })
 
             # ── save pkl ─────────────────────────────────────────────────────
@@ -142,7 +147,7 @@ class _QuickWorker(QThread):
                 'roi_list':   roi_list,
                 'params':     {
                     'k_mult':         1.0,
-                    'min_dist':       0.2,
+                    'min_dist':       0.7,
                     'scale_um_per_px': scale,
                 },
                 'status': 'Computed',
@@ -325,6 +330,7 @@ class QuickAnalysisDialog(QDialog):
         self._progress.setVisible(True)
         self._log.setVisible(True)
         self._status_lbl.setText("Running…")
+        self._loading_toast = Toast("Analyzing…", self, kind="loading", duration=0)
 
         self._worker = _QuickWorker(
             video_path  = self._video_path,
@@ -346,6 +352,9 @@ class QuickAnalysisDialog(QDialog):
         self._progress.setVisible(False)
         self._status_lbl.setText("Done — opening Review…")
         self._log.append(f"✓ Saved: {pkl_path}")
+        if hasattr(self, '_loading_toast'):
+            self._loading_toast.deleteLater()
+        Toast("Analysis complete — opening Review", self, kind="success")
         QApplication.processEvents()
 
         from .dialog_review import ReviewDialog
@@ -358,6 +367,9 @@ class QuickAnalysisDialog(QDialog):
         self._run_btn.setEnabled(True)
         self._status_lbl.setText("Error — see log.")
         self._log.append(f"✗ {msg}")
+        if hasattr(self, '_loading_toast'):
+            self._loading_toast.deleteLater()
+        Toast("Error — see log below", self, kind="error")
 
     def _cancel(self):
         if self._worker and self._worker.isRunning():

@@ -3,10 +3,11 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QFileDialog, QTableWidget, QTableWidgetItem,
-    QHeaderView, QAbstractItemView, QFrame, QMessageBox,
+    QHeaderView, QAbstractItemView, QFrame, QMessageBox, QApplication,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
+from .toast import Toast
 
 
 class ImportDialog(QDialog):
@@ -145,6 +146,9 @@ class ImportDialog(QDialog):
             QMessageBox.warning(self, "No files", "Please add video files first.")
             return
 
+        _t = Toast("Copying files…", self, kind="loading", duration=0)
+        QApplication.processEvents()
+
         errors = []
         copied = 0
         for r in range(self.table.rowCount()):
@@ -166,11 +170,14 @@ class ImportDialog(QDialog):
             except Exception as e:
                 errors.append(f"{Path(src).name}: {e}")
 
+        _t.close()
+
         if errors:
             QMessageBox.warning(self, "Some errors",
                 "\n".join(errors) + f"\n\n{copied} file(s) copied successfully.")
 
         if copied > 0:
+            Toast(f"{copied} file(s) copied", self, kind="success")
             QMessageBox.information(
                 self, "Import Complete",
                 f"✓  {copied} file(s) copied to:\n{self.project_root}\n\n"

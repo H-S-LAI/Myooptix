@@ -3,13 +3,15 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+from .toast import Toast
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QGroupBox,
     QHeaderView, QProgressBar, QAbstractItemView,
     QStyledItemDelegate, QStyleOptionButton, QStyle, QApplication,
 )
-from PyQt6.QtCore import Qt, QRect, QModelIndex
+from PyQt6.QtCore import Qt, QRect, QModelIndex, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QPalette
 
 PKL_DIR   = "_pkl_for_review"
@@ -110,6 +112,18 @@ def _scan_rows(video_root: str, project_name: str) -> list[dict]:
     return rows
 
 
+class _ScanWorker(QThread):
+    done = pyqtSignal(list)
+
+    def __init__(self, video_root, project_name):
+        super().__init__()
+        self._video_root   = video_root
+        self._project_name = project_name
+
+    def run(self):
+        self.done.emit(_scan_rows(self._video_root, self._project_name))
+
+
 class DashboardTab(QWidget):
     def __init__(self, open_review_fn=None, video_root: str = "", project_name: str = "", parent=None):
         super().__init__(parent)
@@ -118,7 +132,7 @@ class DashboardTab(QWidget):
         self._project_name = project_name
         self._rows: list[dict] = []
         self._build_ui()
-        self.refresh()
+        QTimer.singleShot(80, self.refresh)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -252,10 +266,22 @@ class DashboardTab(QWidget):
                 bg = QColor("#e8e2d6") if is_hover else QColor("#faf7f2")
                 item.setBackground(bg)
 
-    def refresh(self):
-        self._rows = _scan_rows(self._video_root, self._project_name)
+    def refresh(self, silent: bool = False):
+        self._refresh_silent = silent
+        if not silent:
+            self._scan_toast = Toast("Scanning…", self, kind="loading", duration=0)
+        self._scan_worker = _ScanWorker(self._video_root, self._project_name)
+        self._scan_worker.done.connect(self._on_scan_done)
+        self._scan_worker.start()
+
+    def _on_scan_done(self, rows):
+        self._rows = rows
         self._populate_table()
         self._update_stats()
+        if not self._refresh_silent:
+            self._scan_toast.deleteLater()
+            n = len(self._rows)
+            Toast(f"Scanned {n} video{'s' if n != 1 else ''}", self, kind="info", duration=1800)
 
     def _update_stats(self):
         total    = len(self._rows)
@@ -371,11 +397,11 @@ class DashboardTab(QWidget):
             project_root=project_root,
             scale=default_scale,
             k_mult=1.0,
-            min_dist=0.2,
+            min_dist=0.7,
             parent=self,
         )
         dlg.exec()
-        self.refresh()
+        self.refresh(silent=True)
 
     def _open_review_selected(self):
         from .dialog_review import ReviewDialog
@@ -397,7 +423,7 @@ class DashboardTab(QWidget):
             dlg = ReviewDialog(pkl_path=pkl_path, parent=self)
             self._review_dlg = dlg  # prevent GC crash
             dlg.exec()
-        self.refresh()
+        self.refresh(silent=True)
 
     def _generate_report(self):
         from PyQt6.QtWidgets import QMessageBox
@@ -450,6 +476,9 @@ class DashboardTab(QWidget):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
         if ans != QMessageBox.StandardButton.Yes:
             return
+
+        _t = Toast("Generating report…", self, kind="loading", duration=0)
+        QApplication.processEvents()
 
         metric_map = {
             'BPM':                      'BPM',
@@ -530,9 +559,13 @@ class DashboardTab(QWidget):
                 df_univ.to_excel(writer, sheet_name='Universal Results', index=False)
                 df_wide.to_excel(writer, sheet_name='Grouped by Time',   index=False)
 
+            _t.deleteLater()
+            Toast(f"Report saved — {len(videos)} video(s)", self, kind="success", duration=3000)
             QMessageBox.information(self, "Done",
                 f"Report saved ({len(videos)} video(s)):\n{out_path}")
         except Exception as e:
+            _t.deleteLater()
+            Toast("Report export failed", self, kind="error")
             QMessageBox.critical(self, "Error", str(e))
 
     def _switch_project(self):
