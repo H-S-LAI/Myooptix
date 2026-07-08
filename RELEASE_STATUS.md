@@ -6,7 +6,7 @@ Both sides should update this file before pushing a release.
 | Version | Windows zip | Mac zip | Notes |
 |---------|-------------|---------|-------|
 | v0.1.0 | ✅ `MyoOptix_v0.1.0_Windows.zip` | ❌ not uploaded | Old asset naming — auto-update won't work from this version |
-| v0.2.0 | ✅ `MyoOptix-win.zip` | ❌ pending | New naming: `MyoOptix-win.zip` / `MyoOptix-mac.zip` |
+| v0.2.0 | ✅ `MyoOptix-win.zip` | ✅ `MyoOptix-mac.zip` | |
 | v0.3.0 | ⏳ pending | ⏳ pending | UI overhaul, microscope presets, grant credits |
 
 ## Checklist for each new release

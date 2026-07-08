@@ -152,6 +152,48 @@ Status transitions written to `.json` sidecar only — never re-pickle BeatMetri
 | `writetable` | `pandas.DataFrame.to_excel` |
 | `movmin` | centered sliding minimum loop |
 
+## Release Checklist
+
+### 每次 release 前必改的檔案
+| 檔案 | 說明 |
+|------|------|
+| `version.py` | 版本號 `VERSION = "x.y.z"` |
+| `RELEASE_STATUS.md` | 各平台打包狀態 ⏳ → ✅ |
+
+### 版本號規則
+- **patch** (0.x.**z**): bug fix、UI 微調
+- **minor** (0.**y**.0): 新功能、UI 大改
+- **major** (**x**.0.0): 架構重構
+
+### UI 改動後需同步的地方
+- `myooptix_app/ui/style.py` — 全域樣式，影響所有 dialog
+- `myooptix_app/ui/dialog_compute.py` 與 `dialog_quick.py` — scale 預設值需保持一致（目前都是 2.915 µm/px TCY_4X）
+- `myooptix_app/ui/dialog_review.py` — ROI index 邏輯
+
+### Microscope Presets
+預設值存於 `myooptix_app/assets/presets.json`（所有專案共用）：
+- TCY_4X: 2.915 µm/px（343 px = 1000 µm，校準值）
+- TCY_10X: 1.175 µm/px（851 px = 1000 µm，校準值）
+
+### 網站
+- `docs/index.html` push 到 main 後自動 deploy（GitHub Pages）
+- `docs/icon.png` 已加入 `.gitignore` 例外，確保有被 track
+
+### Binary 資產注意
+- `myooptix_app/assets/*.svg`, `*.png`, `*.json`, `*.icns` 都要確認有 `git add`（非文字檔可能被忽略）
+
+### 舊資料不追溯
+- 已存在的專案資料夾內的 `compute_settings.json` 不要修改（保留使用者當時的參數）
+
+### GitHub Release 流程
+1. `version.py` 改版本號
+2. commit + `git tag vX.Y.Z`
+3. `git push origin main && git push origin vX.Y.Z`
+4. `gh release create vX.Y.Z --title "MyoOptix vX.Y.Z" --notes "..."` 或在網頁建立
+5. 各平台 PyInstaller 打包後上傳 zip，更新 `RELEASE_STATUS.md`
+
+---
+
 ## _archive/ Contents
 
 | 項目 | 說明 |
