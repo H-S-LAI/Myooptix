@@ -10,15 +10,27 @@ Flow:
 """
 
 import sys
+import json
+import os
 import pickle
 from pathlib import Path
 
 from .toast import Toast
 
+_PRESETS_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "presets.json")
+
+
+def _load_presets():
+    try:
+        with open(_PRESETS_PATH) as f:
+            return json.load(f)["presets"]
+    except Exception:
+        return [{"name": "TCY_4X", "scale": 2.915}, {"name": "TCY_10X", "scale": 1.175}]
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QFrame, QFileDialog,
-    QProgressBar, QTextEdit, QApplication,
+    QProgressBar, QTextEdit, QApplication, QComboBox,
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
@@ -34,6 +46,7 @@ class _QuickWorker(QThread):
     def __init__(self, video_path: str, seg_method: str,
                  min_pct: float, max_pct: float,
                  roi_boxes: list,       # [(x,y,w,h),...] for manual, else []
+                 scale: float = 2.915,
                  parent=None):
         super().__init__(parent)
         self.video_path = video_path
@@ -41,6 +54,7 @@ class _QuickWorker(QThread):
         self.min_pct    = min_pct
         self.max_pct    = max_pct
         self.roi_boxes  = roi_boxes
+        self.scale      = scale
         self._abort     = False
 
     def abort(self):
@@ -102,8 +116,7 @@ class _QuickWorker(QThread):
 
             # ── KLT tracking ─────────────────────────────────────────────────
             self.stage.emit(f"KLT tracking  ({len(masks)} ROI(s))…")
-            scale = 2.915  # TCY_4X default
-            results = track_video(self.video_path, masks, scale_um_per_px=scale)
+            results = track_video(self.video_path, masks, scale_um_per_px=self.scale)
 
             # ── MDP + force per ROI ──────────────────────────────────────────
             roi_list = []
@@ -120,7 +133,7 @@ class _QuickWorker(QThread):
 
                 mdp   = calculate_mdp_metrics(signal, time)
                 force = compute_contractility(signal_mag, time, frame_rate, mdp.peak_locs)
-                morph = compute_mask_morphology(masks[i], scale)
+                morph = compute_mask_morphology(masks[i], self.scale)
 
                 roi_list.append({
                     'roi_index':     i,
@@ -148,7 +161,7 @@ class _QuickWorker(QThread):
                 'params':     {
                     'k_mult':         1.0,
                     'min_dist':       0.7,
-                    'scale_um_per_px': scale,
+                    'scale_um_per_px': self.scale,
                 },
                 'status': 'Computed',
             }
@@ -173,6 +186,8 @@ class QuickAnalysisDialog(QDialog):
         self._video_path = ""
         self._worker     = None
         self._roi_boxes  = []   # filled when Manual mode is used before Run
+        self._presets    = _load_presets()
+        self._scale      = self._presets[0]["scale"] if self._presets else 2.915
         self._build_ui()
 
     # ── drag & drop ──────────────────────────────────────────────────────────
@@ -235,6 +250,21 @@ class QuickAnalysisDialog(QDialog):
 
         root.addWidget(self._divider())
 
+        # ── Microscope preset ─────────────────────────────────────────────────
+        preset_lbl = QLabel("Microscope preset")
+        preset_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
+        root.addWidget(preset_lbl)
+
+        preset_row = QHBoxLayout()
+        self._combo_preset = QComboBox()
+        for p in self._presets:
+            self._combo_preset.addItem(f"{p['name']}  ({p['scale']} µm/px)")
+        self._combo_preset.currentIndexChanged.connect(self._on_preset)
+        preset_row.addWidget(self._combo_preset)
+        root.addLayout(preset_row)
+
+        root.addWidget(self._divider())
+
         # ── progress ──────────────────────────────────────────────────────────
         self._status_lbl = QLabel("Ready.")
         self._status_lbl.setStyleSheet("font-size: 11px; color: #6b6456;")
@@ -279,6 +309,10 @@ class QuickAnalysisDialog(QDialog):
         line.setFrameShape(QFrame.Shape.HLine)
         line.setStyleSheet("color: #d6cfc2;")
         return line
+
+    def _on_preset(self, idx):
+        if 0 <= idx < len(self._presets):
+            self._scale = self._presets[idx]["scale"]
 
     # ── actions ───────────────────────────────────────────────────────────────
 
@@ -338,6 +372,7 @@ class QuickAnalysisDialog(QDialog):
             min_pct     = 0.15,
             max_pct     = 50.0,
             roi_boxes   = roi_boxes,
+            scale       = self._scale,
         )
         self._worker.stage.connect(self._on_stage)
         self._worker.finished.connect(self._on_finished)

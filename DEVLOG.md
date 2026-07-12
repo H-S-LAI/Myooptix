@@ -59,6 +59,14 @@ After appending, commit and push so the other side can pull and see.
 - Built `MyoOptix_v0.3.0_Mac.zip` (841 MB) via `myooptix_mac.spec`
 - Released: GitHub v0.3.0 tag, Mac ✅, Windows ⏳
 
+## 2026-07-12 Windows — v0.3.1 code review + Quick Analysis preset + Windows packaging
+
+- Pulled Mac v0.3.0 commits (morphology, toast, presets, PCA, UI polish)
+- Fixed `toast.py`: `close()` crashed when `self._anim is None` (duration=0 toast) — changed `hasattr` check to `is not None`
+- Added microscope preset dropdown to `dialog_quick.py` (was hardcoded TCY_4X 2.915 µm/px) — now reads `presets.json`, passes selected scale to worker
+- Bumped version to v0.3.1 (Windows-side fixes warrant a patch bump)
+- Built `MyoOptix-win.zip` via `myooptix.spec` — uploaded to GitHub v0.3.1 release
+
 ## 2026-07-02 Mac — Algorithm + Analysis
 
 - Integrated PCA as default axis selection (`mdp.py`: `select_dominant_signal()`)

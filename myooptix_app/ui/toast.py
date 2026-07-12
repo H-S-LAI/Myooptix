@@ -81,7 +81,7 @@ class Toast(QLabel):
 
     def close(self):
         # if already fading, just let it finish; else fade out then close
-        if hasattr(self, '_anim') and self._anim.state() == QPropertyAnimation.State.Running:
+        if self._anim is not None and self._anim.state() == QPropertyAnimation.State.Running:
             super().close()
             return
         self._fade(start=1.0, end=0.0, ms=160, on_done=super().close)
