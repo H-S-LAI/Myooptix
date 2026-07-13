@@ -8,7 +8,7 @@ Both sides should update this file before pushing a release.
 | v0.1.0 | ✅ `MyoOptix_v0.1.0_Windows.zip` | ❌ not uploaded | Old asset naming — auto-update won't work from this version |
 | v0.2.0 | ✅ `MyoOptix-win.zip` | ✅ `MyoOptix-mac.zip` | |
 | v0.3.0 | ❌ skipped  | ✅ `MyoOptix_v0.3.0_Mac.zip` | Mac-only; superseded by v0.3.1 |
-| v0.3.1 | ✅ `MyoOptix-win.zip` | ⏳ pending | Quick Analysis preset, toast close() fix |
+| v0.3.1 | ✅ `MyoOptix-v0.3.1-win.zip` | ✅ `MyoOptix-v0.3.1-mac.zip` | Quick Analysis preset, toast close() fix |
 | collab-v1.0.0 | ⏳ pending | ✅ `MyoOptix-collab-v1.0.0-mac.zip` | Collab Edition — separate app+server, see DEVLOG |
 
 ## Checklist for each new release
