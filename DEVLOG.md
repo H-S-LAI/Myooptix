@@ -94,6 +94,13 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - 上傳至 GitHub release `collab-v1.0.0`，檔名：`MyoOptix-collab-v1.0.0-win.zip`
 - 上傳完通知 Mac 更新 `docs/index.html` Windows 下載連結
 
+### 網站 & 基礎建設
+- 購買 `myooptix.com` 域名，設定 Cloudflare DNS
+- GitHub Pages 從 `docs/` 部署，custom domain `myooptix.com`（HTTPS）
+- `myooptix.com` → collab 申請頁（`docs/index.html`）
+- `myooptix.com/lab.html` → 主版下載頁（隱藏，不公開連結）
+- Brevo 負責 transactional email，sender `noreply@myooptix.com`，DKIM/SPF 已驗證
+
 ### 已完成
 - Mac v1.0.0 打包 → 上傳至 GitHub `collab-v1.0.0` release
 - `myooptix.com` 首頁 Mac 下載連結已更新
