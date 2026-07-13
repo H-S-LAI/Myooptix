@@ -87,6 +87,9 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 # → dist/MyoOptix.app
 ```
 
+### Windows 交接
+`git pull`，然後照下方 Windows 打包說明做。`collab_server/app/` 就是要打包的資料夾，先把 `myooptix_app/assets/icon.png` 複製到 `collab_server/app/assets/`。
+
 ### Windows 打包（待完成）
 - 需要在 Windows 建立獨立 venv（同主版環境）
 - 建立 `myooptix_collab_win.spec`（參考主版 `myooptix.spec`，但 pathex 指向 `app/`）
