@@ -91,7 +91,8 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - 需要在 Windows 建立獨立 venv（同主版環境）
 - 建立 `myooptix_collab_win.spec`（參考主版 `myooptix.spec`，但 pathex 指向 `app/`）
 - 輸出命名：`MyoOptix-collab-v1.0.0-win.zip`
-- 上傳至 GitHub release `collab-v1.0.0`
+- 上傳至 GitHub release `collab-v1.0.0`，檔名：`MyoOptix-collab-v1.0.0-win.zip`
+- 上傳完通知 Mac 更新 `docs/index.html` Windows 下載連結
 
 ### 已完成
 - Mac v1.0.0 打包 → 上傳至 GitHub `collab-v1.0.0` release
