@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyoOptix Research — Collaborative Access</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:     #f2f1ee;
+      --surf:   #ffffff;
+      --surf2:  #eceae6;
+      --border: #dddbd5;
+      --text:   #1c1c2a;
+      --muted:  #6b6f7d;
+      --dim:    #9599a5;
+      --accent: #1a5c3a;
+      --green:  #1a5c3a;
+      --red:    #c25c4e;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text);
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%; padding: 16px 40px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: #f2f1eee8; backdrop-filter: blur(10px); z-index: 20;
+    }
+    header img.logo-icon { width: 28px; height: 28px; flex-shrink: 0; border-radius: 7px; }
+    .logo { font-size: 1.05rem; font-weight: 700; }
+    .logo-sub { font-size: .85rem; color: var(--muted); font-weight: 400; margin-left: 2px; }
+    header nav { margin-left: auto; display: flex; gap: 24px; }
+    header nav a { color: var(--muted); text-decoration: none; font-size: .85rem; transition: color .15s; }
+    header nav a:hover { color: var(--text); }
+
+    /* ── SECTIONS ── */
+    section { width: 100%; max-width: 760px; padding: 72px 24px; }
+    section + section { border-top: 1px solid var(--border); }
+
+    /* ── HERO ── */
+    .hero { text-align: center; }
+    .badge {
+      display: inline-block;
+      background: #1a5c3a12; border: 1px solid #1a5c3a44;
+      color: var(--accent); font-size: .72rem; padding: 3px 12px;
+      border-radius: 20px; margin-bottom: 28px; letter-spacing: .8px;
+    }
+    h1 {
+      font-size: clamp(1.8rem, 4.5vw, 2.6rem); font-weight: 700; line-height: 1.18;
+      margin-bottom: 16px;
+      background: linear-gradient(140deg, #1c1c2a 20%, #1a5c3a 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      text-wrap: balance;
+    }
+    .subtitle {
+      color: var(--muted); font-size: 1rem; line-height: 1.7;
+      margin-bottom: 44px; max-width: 480px; margin-inline: auto;
+    }
+
+    .features {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin-top: 8px;
+    }
+    .feature {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px; text-align: left;
+    }
+    .feature .icon { font-size: 1.15rem; margin-bottom: 8px; }
+    .feature h3 { font-size: .83rem; font-weight: 600; margin-bottom: 4px; }
+    .feature p  { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── DOWNLOAD ── */
+    h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 8px; }
+    .section-sub { color: var(--muted); font-size: .88rem; line-height: 1.65; margin-bottom: 32px; }
+
+    .dl-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .dl-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px 28px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .dl-card-top { display: flex; align-items: center; gap: 12px; }
+    .dl-platform-icon { font-size: 2rem; line-height: 1; }
+    .dl-platform-name { font-size: 1rem; font-weight: 700; }
+    .dl-platform-ver  { font-size: .76rem; color: var(--muted); margin-top: 2px; }
+    .btn-dl {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 20px; border-radius: 8px;
+      font-size: .88rem; font-weight: 600; text-decoration: none;
+      background: var(--accent); color: #fff;
+      transition: opacity .15s, transform .15s;
+    }
+    .btn-dl:hover { opacity: .82; transform: translateY(-1px); }
+    .btn-dl.coming-soon {
+      background: var(--surf2); color: var(--dim);
+      border: 1px solid var(--border); cursor: default;
+      pointer-events: none;
+    }
+    .dl-hint { font-size: .74rem; color: var(--dim); text-align: center; }
+
+    /* ── FORM ── */
+    .form-wrap {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 36px 40px;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: .8rem; font-weight: 600; color: var(--text); }
+    input {
+      padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg);
+      font-size: .88rem; color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px #1a5c3a18;
+    }
+    input::placeholder { color: var(--dim); }
+
+    .form-note {
+      font-size: .76rem; color: var(--muted); line-height: 1.55;
+      margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-submit {
+      width: 100%; padding: 12px; border-radius: 8px;
+      background: var(--accent); color: #fff;
+      border: none; cursor: pointer;
+      font-size: .92rem; font-weight: 600;
+      transition: opacity .15s, transform .15s;
+      margin-top: 20px;
+    }
+    .btn-submit:hover:not(:disabled) { opacity: .85; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: .5; cursor: default; }
+
+    /* alerts */
+    .alert {
+      margin-top: 16px; padding: 12px 16px; border-radius: 8px;
+      font-size: .84rem; line-height: 1.5; display: none;
+    }
+    .alert.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; display: block; }
+    .alert.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; display: block; }
+
+    /* ── DEMO ── */
+    .demo-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: 1.4px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .demo-heading { font-size: 1.45rem; font-weight: 700; margin-bottom: 10px; }
+    .demo-sub { color: var(--muted); font-size: .88rem; line-height: 1.65; margin-bottom: 36px; max-width: 540px; }
+    .step-nav {
+      display: flex; gap: 0; margin-bottom: 28px;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .step-btn {
+      flex: 1; padding: 14px 8px;
+      background: var(--surf); border: none; border-right: 1px solid var(--border);
+      color: var(--muted); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background .15s, color .15s;
+    }
+    .step-btn:last-child { border-right: none; }
+    .step-btn .snum {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--border); color: var(--muted);
+      font-size: .72rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-btn .slabel { font-size: .78rem; font-weight: 600; }
+    .step-btn .sdesc { font-size: .68rem; color: var(--dim); }
+    .step-btn:hover { background: var(--surf2); color: var(--text); }
+    .step-btn.active { background: var(--surf2); color: var(--text); }
+    .step-btn.active .snum { background: var(--accent); color: #fff; }
+    .step-btn.active .slabel { color: var(--text); }
+    .demo-panel { display: none; animation: fadeIn .25s ease; }
+    .demo-panel.visible { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .frame-wrap {
+      position: relative; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; margin-bottom: 16px;
+    }
+    .frame-wrap img { width: 100%; display: block; }
+    .roi-overlays { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 8px; }
+    .roi-badge {
+      padding: 3px 10px; border-radius: 12px; font-size: .7rem; font-weight: 700;
+      border: 1px solid currentColor; backdrop-filter: blur(4px);
+    }
+    .seg-info {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 18px;
+      font-size: .82rem; color: var(--muted); display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .seg-info span { color: var(--text); font-weight: 600; }
+    .terminal { background: #010409; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .term-bar {
+      background: var(--surf); padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .term-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .term-title { font-size: .75rem; color: var(--muted); margin-left: 8px; }
+    .term-body {
+      padding: 18px 20px; font-family: "SF Mono","Fira Code",Consolas,monospace;
+      font-size: .8rem; line-height: 1.75; min-height: 220px; color: #c9d1d9;
+    }
+    .term-body .ok   { color: #3fb950; }
+    .term-body .info { color: #8b949e; }
+    .term-body .num  { color: #58a6ff; font-weight: 600; }
+    .term-body .cursor { display: inline-block; width: 8px; height: 1em; background: #58a6ff88; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-top: 3px solid var(--cc, var(--border));
+      border-radius: 10px; padding: 16px;
+    }
+    .stat-card .rtag {
+      font-size: .68rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--cc, var(--muted)); margin-bottom: 12px;
+    }
+    .stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+    .stat-row:last-child { margin-bottom: 0; }
+    .skey { font-size: .73rem; color: var(--muted); }
+    .sval { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .chart-wrap {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+    }
+    .chart-wrap .ctitle {
+      padding: 11px 16px 0; font-size: .68rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+    }
+    .chart-wrap img { width: 100%; display: block; }
+
+    /* ── FLOW ── */
+    .flow {
+      display: flex; gap: 0; align-items: stretch;
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    .flow-step {
+      flex: 1; padding: 20px 16px; text-align: center;
+      border-right: 1px solid var(--border); background: var(--surf);
+    }
+    .flow-step:last-child { border-right: none; }
+    .flow-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: .78rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+    }
+    .flow-step h3 { font-size: .82rem; font-weight: 700; margin-bottom: 4px; }
+    .flow-step p  { font-size: .74rem; color: var(--muted); line-height: 1.45; }
+
+    /* ── TEAM ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .team-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px 22px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .team-role {
+      font-size: .68rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--accent); min-height: 2em;
+    }
+    .team-name { font-size: 1rem; font-weight: 700; line-height: 1.4; }
+    .team-name-zh { font-size: .88rem; font-weight: 400; color: var(--muted); }
+    .team-dept { font-size: .8rem; color: var(--muted); line-height: 1.65; }
+    .team-email {
+      font-size: .78rem; color: var(--accent); text-decoration: none; margin-top: auto;
+    }
+    .team-email:hover { text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    footer {
+      width: 100%; border-top: 1px solid var(--border);
+      padding: 28px 40px; text-align: center;
+      font-size: .78rem; color: var(--dim);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 560px) {
+      header { padding: 14px 20px; }
+      .dl-cards { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .form-wrap { padding: 24px 20px; }
+      .flow { flex-direction: column; }
+      .flow-step { border-right: none; border-bottom: 1px solid var(--border); }
+      .flow-step:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img class="logo-icon" src="icon.png" alt="MyoOptix">
+  <span class="logo">MyoOptix</span>
+  <nav>
+    <a href="#demo">Demo</a>
+    <a href="#request">Request Access</a>
+    <a href="#download">Download</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <img src="icon.png" alt="MyoOptix" style="width:88px;height:88px;border-radius:20px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,.15),0 2px 8px rgba(0,0,0,.08);display:block;margin-left:auto;margin-right:auto;">
+  <div class="badge">CARDIAC ORGANOID ANALYSIS</div>
+  <h1>MyoOptix</h1>
+  <p class="subtitle">Desktop software for quantitative analysis of cardiac organoid contractility — measuring heart rate, beat intervals, contraction and relaxation dynamics from brightfield video.</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="icon">🎯</div>
+      <h3>No calibration needed</h3>
+      <p>Automatic ROI detection via U-Net or Otsu segmentation.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">⚡</div>
+      <h3>Quick Analysis</h3>
+      <p>Single-video analysis with the full MyoOptix pipeline.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📊</div>
+      <h3>Full metrics</h3>
+      <p>HR, IBI, CS/CE/RE, contractility — same as the main app.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🖥️</div>
+      <h3>Runs locally</h3>
+      <p>Native Mac and Windows app — video never leaves your machine.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <p class="demo-label">Interactive Demo</p>
+  <h2 class="demo-heading">See How It Works</h2>
+  <p class="demo-sub">Step through a real analysis run on a cardiac organoid video with 3 spontaneously beating ROIs.</p>
+  <div class="step-nav">
+    <button class="step-btn active" data-panel="p1">
+      <span class="snum">1</span>
+      <span class="slabel">Load &amp; Segment</span>
+      <span class="sdesc">Video + ROI detection</span>
+    </button>
+    <button class="step-btn" data-panel="p2">
+      <span class="snum">2</span>
+      <span class="slabel">Analyze &amp; Review</span>
+      <span class="sdesc">Track, compute, inspect</span>
+    </button>
+  </div>
+  <div class="demo-panel visible" id="p1">
+    <div class="frame-wrap">
+      <img src="demo_assets/frame.jpg" alt="Video frame with detected ROIs" />
+      <div class="roi-overlays">
+        <span class="roi-badge" style="color:#1a5c3a;background:#1a5c3a18;">ROI 1</span>
+        <span class="roi-badge" style="color:#2d7a4f;background:#2d7a4f18;">ROI 2</span>
+        <span class="roi-badge" style="color:#c25c4e;background:#c25c4e18;">ROI 3</span>
+      </div>
+    </div>
+    <div class="seg-info">
+      <div>Video &nbsp;<span>1.mov</span></div>
+      <div>Resolution &nbsp;<span>960 &#215; 540</span></div>
+      <div>Frame rate &nbsp;<span>30 fps</span></div>
+      <div>ROIs detected &nbsp;<span>3</span></div>
+      <div>Method &nbsp;<span>U-Net (ResNet-34)</span></div>
+    </div>
+  </div>
+  <div class="demo-panel" id="p2">
+    <div class="frame-wrap" style="margin-bottom:20px">
+      <img src="demo_assets/frame.jpg" alt="ROI overlay" />
+      <div class="roi-overlays">
+        <span class="roi-badge" style="color:#1a5c3a;background:#1a5c3a18;">ROI 1</span>
+        <span class="roi-badge" style="color:#2d7a4f;background:#2d7a4f18;">ROI 2</span>
+        <span class="roi-badge" style="color:#c25c4e;background:#c25c4e18;">ROI 3</span>
+      </div>
+    </div>
+    <div class="terminal" style="margin-bottom:20px">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57"></div>
+        <div class="term-dot" style="background:#febc2e"></div>
+        <div class="term-dot" style="background:#28c840"></div>
+        <span class="term-title">MyoOptix &#8212; Analysis Log</span>
+      </div>
+      <div class="term-body" id="termBody"><span class="cursor"></span></div>
+    </div>
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card" style="--cc:#1a5c3a">
+        <div class="rtag">ROI 1</div>
+        <div class="stat-row"><span class="skey">Heart Rate</span><span class="sval" data-count="23" data-suffix=" BPM">23 BPM</span></div>
+        <div class="stat-row"><span class="skey">IBI avg</span><span class="sval" data-count="1376" data-suffix=" ms">1376 ms</span></div>
+        <div class="stat-row"><span class="skey">Contractility</span><span class="sval" data-count="64.9" data-suffix=" µm/s">64.9 µm/s</span></div>
+      </div>
+      <div class="stat-card" style="--cc:#2d7a4f">
+        <div class="rtag">ROI 2</div>
+        <div class="stat-row"><span class="skey">Heart Rate</span><span class="sval" data-count="31" data-suffix=" BPM">31 BPM</span></div>
+        <div class="stat-row"><span class="skey">IBI avg</span><span class="sval" data-count="994" data-suffix=" ms">994 ms</span></div>
+        <div class="stat-row"><span class="skey">Contractility</span><span class="sval" data-count="76.7" data-suffix=" µm/s">76.7 µm/s</span></div>
+      </div>
+      <div class="stat-card" style="--cc:#c25c4e">
+        <div class="rtag">ROI 3</div>
+        <div class="stat-row"><span class="skey">Heart Rate</span><span class="sval" data-count="18" data-suffix=" BPM">18 BPM</span></div>
+        <div class="stat-row"><span class="skey">IBI avg</span><span class="sval" data-count="1757" data-suffix=" ms">1757 ms</span></div>
+        <div class="stat-row"><span class="skey">Contractility</span><span class="sval" data-count="81.1" data-suffix=" µm/s">81.1 µm/s</span></div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="margin-bottom:12px">
+      <p class="ctitle">Motion Signal &amp; Beat Detection</p>
+      <img src="demo_assets/waveform.png" alt="Beat waveforms" />
+    </div>
+    <div class="chart-wrap">
+      <p class="ctitle">Contractility Trace</p>
+      <img src="demo_assets/force.png" alt="Contractility traces" />
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <p class="demo-label" style="font-size:.7rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">HOW IT WORKS</p>
+  <h2 style="margin-bottom:24px;">Getting started</h2>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <h3>Request access</h3>
+      <p>Fill in the form below with your name, institution, and email.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <h3>Get approved</h3>
+      <p>We review and approve your request, then send you a confirmation email.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <h3>Download & login</h3>
+      <p>Download the app, log in with your email and password.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <h3>Analyze</h3>
+      <p>Drop in a video and run the full analysis pipeline.</p>
+    </div>
+  </div>
+</section>
+
+<!-- REQUEST FORM -->
+<section id="request">
+  <p class="demo-label" style="font-size:.7rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">ACCESS REQUEST</p>
+  <h2 style="margin-bottom:8px;">Request access</h2>
+  <p class="section-sub">Fill in your details below. You'll receive a confirmation email, and we'll notify you once your account is ready.</p>
+
+  <div class="form-wrap">
+    <form id="registerForm" onsubmit="submitForm(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="full_name">Full name</label>
+          <input type="text" id="full_name" placeholder="Your full name" required>
+        </div>
+        <div class="form-group">
+          <label for="institution">Institution</label>
+          <input type="text" id="institution" placeholder="University / Lab" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" placeholder="you@institution.edu" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Set a password</label>
+          <input type="password" id="password" placeholder="Min. 8 characters" required minlength="8">
+        </div>
+      </div>
+      <p class="form-note">Your information is used only to manage access to MyoOptix. We do not share your data with third parties. Contact <a href="mailto:b101110099@tmu.edu.tw" style="color:var(--accent);">b101110099@tmu.edu.tw</a> for questions.</p>
+      <button type="submit" class="btn-submit" id="submitBtn">Submit access request</button>
+    </form>
+    <div class="alert" id="alertBox"></div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download">
+  <p class="demo-label" style="font-size:.7rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">DOWNLOAD</p>
+  <h2 style="margin-bottom:8px;">Get the app</h2>
+  <p class="section-sub">Download MyoOptix for your platform. An approved account is required to log in.</p>
+
+  <div class="dl-cards">
+    <div class="dl-card">
+      <div class="dl-card-top">
+        <div class="dl-platform-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></div>
+        <div>
+          <div class="dl-platform-name">macOS</div>
+          <div class="dl-platform-ver" id="mac-ver">Coming soon</div>
+        </div>
+      </div>
+      <a href="#" class="btn-dl coming-soon" id="mac-btn">Coming soon</a>
+      <div class="dl-hint">macOS 12 Monterey or later</div>
+    </div>
+    <div class="dl-card">
+      <div class="dl-card-top">
+        <div class="dl-platform-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
+        <div>
+          <div class="dl-platform-name">Windows</div>
+          <div class="dl-platform-ver" id="win-ver">Coming soon</div>
+        </div>
+      </div>
+      <a href="#" class="btn-dl coming-soon" id="win-btn">Coming soon</a>
+      <div class="dl-hint">Windows 10 / 11 (64-bit)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <p class="demo-label" style="font-size:.7rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">TEAM</p>
+  <h2 style="margin-bottom:24px;">About</h2>
+  <div class="team-grid">
+    <div class="team-card">
+      <p class="team-role">Grant Principal Investigator</p>
+      <p class="team-name">李岡遠 教授<br><span class="team-name-zh">Lee, Kang-Yun</span></p>
+      <p class="team-dept">Division of Pulmonary Medicine<br>School of Medicine<br>Taipei Medical University</p>
+    </div>
+    <div class="team-card">
+      <p class="team-role">Lab Director</p>
+      <p class="team-name">楊添鈞 助理教授<br><span class="team-name-zh">Yang, Tien-Chun</span></p>
+      <p class="team-dept">Department of Anatomy and Cell Biology<br>College of Medicine<br>Taipei Medical University</p>
+    </div>
+    <div class="team-card">
+      <p class="team-role">Developer</p>
+      <p class="team-name">賴竑劭<br><span class="team-name-zh">Lai, Hung-Shao</span></p>
+      <p class="team-dept">Department of Anatomy and Cell Biology<br>College of Medicine<br>Taipei Medical University</p>
+      <a class="team-email" href="mailto:b101110099@tmu.edu.tw">b101110099@tmu.edu.tw</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 MyoOptix &nbsp;&middot;&nbsp; 賴竑劭 &nbsp;&middot;&nbsp; Taipei Medical University &nbsp;&middot;&nbsp; <a href="mailto:b101110099@tmu.edu.tw">b101110099@tmu.edu.tw</a></p>
+  <p style="margin-top:8px;font-size:.75em;opacity:.65;">Supported by NSTC 114-2640-B-038-001 &mdash; AI輔助與即時感測回饋之免疫藥物毒性分析晶片</p>
+</footer>
+
+<script>
+  // ── demo step nav ──────────────────────────────────────────────────────────
+  const stepBtns = document.querySelectorAll('.step-btn');
+  const panels   = document.querySelectorAll('.demo-panel');
+  let termPlayed = false;
+  stepBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      stepBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.panel;
+      panels.forEach(p => p.classList.toggle('visible', p.id === target));
+      if (target === 'p2') {
+        if (!termPlayed) { termPlayed = true; playTerminal(); }
+        animateCounts();
+      }
+    });
+  });
+  const LINES = [
+    { t: 0,    cls: 'ok',   txt: '[OK]  Reading video: 1.mov' },
+    { t: 200,  cls: 'info', txt: '      960x540 px  |  30.0 fps  |  951 frames' },
+    { t: 500,  cls: 'ok',   txt: '[OK]  Segmenting with U-Net (ResNet-34)...' },
+    { t: 1200, cls: 'info', txt: '      3 ROIs detected' },
+    { t: 1500, cls: 'ok',   txt: '[OK]  KLT optical flow tracking...' },
+    { t: 1700, cls: 'info', txt: '      ROI 1: 951 frames tracked' },
+    { t: 1900, cls: 'info', txt: '      ROI 2: 951 frames tracked' },
+    { t: 2100, cls: 'info', txt: '      ROI 3: 951 frames tracked' },
+    { t: 2400, cls: 'ok',   txt: '[OK]  MDP peak detection (PCA axis)...' },
+    { t: 2600, cls: 'num',  txt: '      ROI 1:  23 beats   HR =  23 BPM   IBI = 1376 ms' },
+    { t: 2800, cls: 'num',  txt: '      ROI 2:  31 beats   HR =  31 BPM   IBI =  994 ms' },
+    { t: 3000, cls: 'num',  txt: '      ROI 3:  18 beats   HR =  18 BPM   IBI = 1757 ms' },
+    { t: 3300, cls: 'ok',   txt: '[OK]  Contractility analysis (anchor search)...' },
+    { t: 3500, cls: 'num',  txt: '      ROI 1:  64.9 um/s    ROI 2:  76.7 um/s    ROI 3:  81.1 um/s' },
+    { t: 3800, cls: 'ok',   txt: '[OK]  Exporting to Excel...' },
+    { t: 4200, cls: 'ok',   txt: '[OK]  Done. Results saved.' },
+  ];
+  function playTerminal() {
+    const body = document.getElementById('termBody');
+    body.innerHTML = '<span class="cursor"></span>';
+    LINES.forEach(({ t, cls, txt }) => {
+      setTimeout(() => {
+        const cursor = body.querySelector('.cursor');
+        const line = document.createElement('div');
+        line.className = cls; line.textContent = txt;
+        body.insertBefore(line, cursor);
+        body.scrollTop = body.scrollHeight;
+      }, t);
+    });
+  }
+  function animateCounts() {
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const end = parseFloat(el.dataset.count);
+      const suf = el.dataset.suffix || '';
+      const dec = end % 1 !== 0 ? 1 : 0;
+      const dur = 800, step = 16; let t = 0;
+      const tick = setInterval(() => {
+        t += step;
+        const cur = t >= dur ? end : end * (t / dur);
+        if (t >= dur) clearInterval(tick);
+        el.textContent = cur.toFixed(dec) + suf;
+      }, step);
+    });
+  }
+
+  // ── register form ──────────────────────────────────────────────────────────
+  const API = "https://pleasant-miracle-production-95c3.up.railway.app";
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const alertBox = document.getElementById("alertBox");
+    alertBox.className = "alert";
+    alertBox.textContent = "";
+
+    const body = {
+      full_name:   document.getElementById("full_name").value.trim(),
+      institution: document.getElementById("institution").value.trim(),
+      email:       document.getElementById("email").value.trim(),
+      password:    document.getElementById("password").value,
+    };
+
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+
+    try {
+      const resp = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await resp.json();
+
+      if (resp.ok) {
+        alertBox.className = "alert success";
+        alertBox.textContent = "✓ Request submitted! Check your inbox — we'll notify you once your account is approved.";
+        document.getElementById("registerForm").reset();
+        btn.textContent = "Submitted";
+      } else {
+        alertBox.className = "alert error";
+        alertBox.textContent = data.detail || "Something went wrong. Please try again.";
+        btn.disabled = false;
+        btn.textContent = "Submit access request";
+      }
+    } catch (err) {
+      alertBox.className = "alert error";
+      alertBox.textContent = "Cannot reach the server. Please check your connection and try again.";
+      btn.disabled = false;
+      btn.textContent = "Submit access request";
+    }
+  }
+</script>
+</body>
+</html>
