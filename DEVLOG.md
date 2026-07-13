@@ -61,7 +61,7 @@ After appending, commit and push so the other side can pull and see.
 
 ## 2026-07-13 Mac — Collab Edition v1.0.0 (separate app, separate server)
 
-**新增獨立的 Collab Edition，供外部研究者申請使用。與主版完全分開，Windows 只需處理主版。**
+**新增獨立的 Collab Edition，供外部研究者申請使用。Windows 需另行打包（見下方 Windows 打包說明）。**
 
 ### 架構概覽
 - **Server**: `20260712_myooptix_collab_server/` — FastAPI + Railway + PostgreSQL
