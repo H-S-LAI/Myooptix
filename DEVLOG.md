@@ -59,6 +59,48 @@ After appending, commit and push so the other side can pull and see.
 - Built `MyoOptix_v0.3.0_Mac.zip` (841 MB) via `myooptix_mac.spec`
 - Released: GitHub v0.3.0 tag, Mac ✅, Windows ⏳
 
+## 2026-07-13 Mac — Collab Edition v1.0.0 (separate app, separate server)
+
+**新增獨立的 Collab Edition，供外部研究者申請使用。與主版完全分開，Windows 只需處理主版。**
+
+### 架構概覽
+- **Server**: `20260712_myooptix_collab_server/` — FastAPI + Railway + PostgreSQL
+  - `main.py` — API server（register/login/verify/admin endpoints）
+  - `static/admin.html` — 管理後台（https://pleasant-miracle-production-95c3.up.railway.app/web/admin.html）
+- **App**: `20260712_myooptix_collab_server/app/` — 獨立 PyQt6 app
+  - `main.py` — entry point（token verify → login → QuickAnalysis）
+  - `ui/dialog_login.py` — 登入畫面（含 icon.png + credit）
+  - `ui/dialog_register.py` — 申請帳號
+  - `ui/dialog_quick.py` — Quick Analysis（含網路監控每 10 秒 verify）
+  - `ui/dialog_review.py` — Review
+  - `api_client.py` — HTTP wrapper
+  - `token_store.py` — 本地 token 存取
+  - `assets/icon.png` — MyoOptix logo（從主版複製）
+  - `assets/model/best_model.pth` — U-Net 模型
+  - `myooptix_collab_mac.spec` — Mac PyInstaller spec
+
+### Mac 打包
+```bash
+cd 20260712_myooptix_collab_server/app
+source ../../20260630_matlabtopython/.venv/bin/activate
+pyinstaller myooptix_collab_mac.spec --noconfirm
+# → dist/MyoOptix.app
+```
+
+### Windows 打包（待完成）
+- 需要在 Windows 建立獨立 venv（同主版環境）
+- 建立 `myooptix_collab_win.spec`（參考主版 `myooptix.spec`，但 pathex 指向 `app/`）
+- 輸出命名：`MyoOptix-collab-v1.0.0-win.zip`
+- 上傳至 GitHub release `collab-v1.0.0`
+
+### 已完成
+- Mac v1.0.0 打包 → 上傳至 GitHub `collab-v1.0.0` release
+- `myooptix.com` 首頁 Mac 下載連結已更新
+- Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
+- 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
+
+---
+
 ## 2026-07-12 Windows — v0.3.1 code review + Quick Analysis preset + Windows packaging
 
 - Pulled Mac v0.3.0 commits (morphology, toast, presets, PCA, UI polish)
