@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyoOptix Collab — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:     #f2f1ee;
+      --surf:   #ffffff;
+      --surf2:  #eceae6;
+      --border: #dddbd5;
+      --text:   #1c1c2a;
+      --muted:  #6b6f7d;
+      --dim:    #9599a5;
+      --accent: #1e3a8a;
+      --green:  #7c9c6e;
+      --red:    #c0392b;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .login-box {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 40px 36px; width: 340px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    }
+    .login-box h2 { font-size: 1.2rem; margin-bottom: 4px; }
+    .login-box p  { font-size: .82rem; color: var(--muted); margin-bottom: 24px; }
+    .login-box input {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: .92rem; background: var(--bg);
+      color: var(--text); margin-bottom: 12px; outline: none;
+    }
+    .login-box input:focus { border-color: var(--accent); }
+    .login-box button {
+      width: 100%; padding: 11px; border: none; border-radius: 8px;
+      background: var(--accent); color: #fff; font-weight: 700;
+      font-size: .92rem; cursor: pointer;
+    }
+    .login-box button:hover { opacity: .88; }
+    .login-err { color: var(--red); font-size: .82rem; margin-top: 10px; display: none; }
+
+    /* ── APP SHELL ── */
+    #app { display: none; }
+    header {
+      background: var(--surf); border-bottom: 1px solid var(--border);
+      padding: 14px 32px; display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .logo { font-size: 1rem; font-weight: 700; }
+    .logo span { color: var(--muted); font-weight: 400; font-size: .85rem; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    .tab-btn {
+      padding: 7px 16px; border-radius: 8px; border: none; background: transparent;
+      color: var(--muted); font-size: .85rem; font-weight: 600; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .tab-btn:hover { background: var(--surf2); color: var(--text); }
+    .tab-btn.active { background: var(--surf2); color: var(--text); }
+    .logout-btn {
+      margin-left: 12px; padding: 7px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: .82rem; cursor: pointer;
+    }
+    .logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── PANELS ── */
+    main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── STATS ROW ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+    }
+    .stat-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* ── TABLE ── */
+    .tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem; background: var(--surf); }
+    th {
+      background: var(--surf2); padding: 10px 14px; text-align: left;
+      font-size: .7rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f7f6f3; }
+
+    /* ── STATUS BADGES ── */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: .72rem; font-weight: 700;
+    }
+    .badge-pending  { background: #fff3e0; color: #b45309; }
+    .badge-approved, .badge-active { background: #e8f5e9; color: #2e7d32; }
+    .badge-rejected, .badge-suspended { background: #fde8e8; color: var(--red); }
+
+    /* ── ACTION BUTTONS ── */
+    .act-btn {
+      padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+      font-size: .78rem; font-weight: 600; cursor: pointer; background: var(--surf);
+      color: var(--text); transition: .15s;
+    }
+    .act-btn:hover { background: var(--surf2); }
+    .act-btn.approve { border-color: var(--green); color: var(--green); }
+    .act-btn.approve:hover { background: #e8f5e9; }
+    .act-btn.reject, .act-btn.suspend { border-color: var(--red); color: var(--red); }
+    .act-btn.reject:hover, .act-btn.suspend:hover { background: #fde8e8; }
+    .act-btn.activate { border-color: var(--accent); color: var(--accent); }
+    .act-btn.activate:hover { background: #e8eef7; }
+    .act-btn.delete { border-color: var(--red); color: var(--red); }
+    .act-btn.delete:hover { background: #fde8e8; }
+
+    /* ── EMPTY / LOADING ── */
+    .empty { color: var(--muted); font-size: .88rem; padding: 40px; text-align: center; }
+    .loading { color: var(--muted); font-size: .88rem; padding: 20px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1c1c2a; color: #fff; padding: 12px 20px;
+      border-radius: 10px; font-size: .85rem; font-weight: 500;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .2s, transform .2s; pointer-events: none; z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: none; }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── CREATE USER FORM ── */
+    .create-form {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px 24px; margin-bottom: 24px;
+      display: none;
+    }
+    .create-form.open { display: block; }
+    .create-form h3 { font-size: .9rem; font-weight: 700; margin-bottom: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-row input {
+      padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px;
+      font-size: .85rem; background: var(--bg); color: var(--text); outline: none;
+      width: 100%;
+    }
+    .form-row input:focus { border-color: var(--accent); }
+    .form-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-primary {
+      padding: 8px 18px; border-radius: 7px; border: none;
+      background: var(--accent); color: #fff; font-weight: 700;
+      font-size: .84rem; cursor: pointer;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-cancel {
+      padding: 8px 14px; border-radius: 7px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: .84rem; cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--surf2); }
+    .panel-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .btn-add {
+      padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text); font-size: .84rem;
+      font-weight: 600; cursor: pointer;
+    }
+    .btn-add:hover { background: var(--surf2); }
+
+    /* ── USER DETAIL MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none; transition: opacity .18s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--surf); border-radius: 14px; width: 720px; max-width: 95vw;
+      max-height: 82vh; display: flex; flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,.18);
+      transform: translateY(12px); transition: transform .18s;
+    }
+    .modal-overlay.open .modal { transform: none; }
+    .modal-header {
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1rem; font-weight: 700; }
+    .modal-header p  { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer;
+      color: var(--muted); padding: 2px 6px; border-radius: 6px;
+      line-height: 1;
+    }
+    .modal-close:hover { background: var(--surf2); color: var(--text); }
+    .modal-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
+    .modal-stat-row { display: flex; gap: 12px; margin-bottom: 20px; }
+    .modal-stat {
+      flex: 1; background: var(--surf2); border-radius: 8px; padding: 12px 16px;
+    }
+    .modal-stat .stat-label { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .modal-stat .stat-value { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .name-link {
+      color: var(--accent); text-decoration: none; font-weight: 600; cursor: pointer;
+    }
+    .name-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <p>MyoOptix Collab — Management Console</p>
+    <input type="password" id="admin-key-input" placeholder="Admin key" />
+    <button onclick="doLogin()">Sign in</button>
+    <p class="login-err" id="login-err">Invalid admin key.</p>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <header>
+    <span class="logo">MyoOptix <span>Admin</span></span>
+    <nav>
+      <button class="tab-btn active" onclick="showPanel('requests')">Requests</button>
+      <button class="tab-btn" onclick="showPanel('users')">Users</button>
+      <button class="tab-btn" onclick="showPanel('usage')">Usage</button>
+      <button class="tab-btn" onclick="showPanel('logins')">Logins</button>
+    </nav>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </header>
+
+  <main>
+    <!-- ── REQUESTS ── -->
+    <div class="panel active" id="panel-requests">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="s-pending">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="s-users">—</div></div>
+        <div class="stat-card"><div class="stat-label">Analyses Today</div><div class="stat-value" id="s-today">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Analyses</div><div class="stat-value" id="s-total">—</div></div>
+      </div>
+      <div class="panel-toolbar" style="margin-bottom:16px;">
+        <div class="panel-title" style="margin-bottom:0">Pending Requests</div>
+        <button class="btn-add" style="border-color:var(--red);color:var(--red);" onclick="clearRejected()">Clear all rejected</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="requests-body"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div class="panel" id="panel-users">
+      <div class="panel-toolbar">
+        <div class="panel-title" style="margin-bottom:0">All Users</div>
+        <button class="btn-add" onclick="toggleCreateForm()">+ Add user</button>
+      </div>
+
+      <!-- create form -->
+      <div class="create-form" id="create-form">
+        <h3>Create user directly</h3>
+        <div class="form-row">
+          <input id="cf-name"  type="text"     placeholder="Full name" />
+          <input id="cf-email" type="email"    placeholder="Email" />
+        </div>
+        <div class="form-row">
+          <input id="cf-inst"  type="text"     placeholder="Institution" />
+          <input id="cf-pw"    type="password" placeholder="Password" />
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="createUser()">Create</button>
+          <button class="btn-cancel"  onclick="toggleCreateForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Institution</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="users-body"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── USAGE ── -->
+    <div class="panel" id="panel-usage">
+      <div class="panel-title">Analysis Usage Log</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Email</th><th>File</th><th>Size (MB)</th><th>Duration (s)</th><th>IP</th></tr></thead>
+          <tbody id="usage-body"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── LOGINS ── -->
+    <div class="panel" id="panel-logins">
+      <div class="panel-title">Login Log</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Email</th><th>IP</th><th>Result</th></tr></thead>
+          <tbody id="logins-body"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── USER DETAIL MODAL ── -->
+<div class="modal-overlay" id="user-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-name">User</h3>
+        <p id="modal-meta"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-stat-row">
+        <div class="modal-stat"><div class="stat-label">Total Analyses</div><div class="stat-value" id="modal-total">—</div></div>
+        <div class="modal-stat"><div class="stat-label">Total Logins</div><div class="stat-value" id="modal-logins">—</div></div>
+        <div class="modal-stat"><div class="stat-label">Last Active</div><div class="stat-value" id="modal-last" style="font-size:.9rem">—</div></div>
+        <div class="modal-stat"><div class="stat-label">Total Duration</div><div class="stat-value" id="modal-dur">—</div></div>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Analysis Records</div>
+      <div class="tbl-wrap" style="margin-bottom:24px;">
+        <table>
+          <thead><tr><th>Time</th><th>File</th><th>Size (MB)</th><th>Duration (s)</th><th>IP</th></tr></thead>
+          <tbody id="modal-logs-body"><tr><td colspan="5" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Login Records</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>IP</th><th>Result</th></tr></thead>
+          <tbody id="modal-logins-body"><tr><td colspan="3" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG — replace with your Railway URL after deploy ──────────────────
+  const API = "https://pleasant-miracle-production-95c3.up.railway.app";
+
+  let ADMIN_KEY = "";
+
+  function doLogin() {
+    const key = document.getElementById("admin-key-input").value.trim();
+    if (!key) return;
+    ADMIN_KEY = key;
+    fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${key}` } })
+      .then(r => {
+        if (!r.ok) throw new Error();
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app").style.display = "block";
+        loadAll();
+      })
+      .catch(() => {
+        document.getElementById("login-err").style.display = "block";
+        ADMIN_KEY = "";
+      });
+  }
+
+  document.getElementById("admin-key-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") doLogin();
+  });
+
+  function logout() {
+    ADMIN_KEY = "";
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("admin-key-input").value = "";
+    document.getElementById("login-err").style.display = "none";
+  }
+
+  function showPanel(name) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(`panel-${name}`).classList.add("active");
+    event.currentTarget.classList.add("active");
+  }
+
+  function toast(msg, duration = 2200) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), duration);
+  }
+
+  function fmt(dt) {
+    if (!dt) return "—";
+    return new Date(dt).toLocaleString("zh-TW", { hour12: false });
+  }
+
+  async function api(path, method = "GET", body = null) {
+    const opts = { method, headers: { Authorization: `Bearer ${ADMIN_KEY}`, "Content-Type": "application/json" } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(`${API}${path}`, opts);
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
+
+  async function loadRequests() {
+    const rows = await api("/admin/requests").catch(() => []);
+    const pending = rows.filter(r => r.status === "pending");
+    document.getElementById("s-pending").textContent = pending.length;
+    const tbody = document.getElementById("requests-body");
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty">No requests yet.</td></tr>`; return; }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.full_name}</td>
+        <td>${r.email}</td>
+        <td>${r.institution}</td>
+        <td>${fmt(r.created_at)}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td>
+          ${r.status === "pending" ? `
+            <button class="act-btn approve" onclick="approveReq('${r.id}', this)">Approve</button>
+            <button class="act-btn reject"  onclick="rejectReq('${r.id}',  this)">Reject</button>
+          ` : "—"}
+        </td>
+      </tr>`).join("");
+  }
+
+  async function loadUsers() {
+    const rows = await api("/admin/users").catch(() => []);
+    document.getElementById("s-users").textContent = rows.length;
+    const tbody = document.getElementById("users-body");
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty">No users yet.</td></tr>`; return; }
+    tbody.innerHTML = rows.map(u => `
+      <tr>
+        <td><span class="name-link" onclick="openUserModal('${u.id}','${u.full_name}','${u.email}','${u.institution}')">${u.full_name}</span></td>
+        <td>${u.email}</td>
+        <td>${u.institution}</td>
+        <td>${fmt(u.created_at)}</td>
+        <td><span class="badge badge-${u.status}">${u.status}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${u.status === "active"
+            ? `<button class="act-btn suspend" onclick="suspendUser('${u.id}', this)">Suspend</button>`
+            : `<button class="act-btn activate" onclick="activateUser('${u.id}', this)">Activate</button>`}
+          <button class="act-btn delete" onclick="deleteUser('${u.id}','${u.full_name}', this)">Delete</button>
+        </td>
+      </tr>`).join("");
+  }
+
+  async function loadUsage() {
+    const rows = await api("/admin/logs/analysis").catch(() => []);
+    const today = new Date().toDateString();
+    const todayCount = rows.filter(r => new Date(r.created_at).toDateString() === today).length;
+    document.getElementById("s-today").textContent = todayCount;
+    document.getElementById("s-total").textContent = rows.length;
+    const tbody = document.getElementById("usage-body");
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty">No analysis logs yet.</td></tr>`; return; }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${fmt(r.created_at)}</td>
+        <td>${r.email}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.filename}">${r.filename}</td>
+        <td>${r.file_size_mb ?? "—"}</td>
+        <td>${r.duration_sec ?? "—"}</td>
+        <td>${r.ip_address ?? "—"}</td>
+      </tr>`).join("");
+  }
+
+  async function loadLogins() {
+    const rows = await api("/admin/logs/login").catch(() => []);
+    const tbody = document.getElementById("logins-body");
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">No login logs yet.</td></tr>`; return; }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${fmt(r.created_at)}</td>
+        <td>${r.email}</td>
+        <td>${r.ip_address ?? "—"}</td>
+        <td><span class="badge ${r.success ? "badge-active" : "badge-rejected"}">${r.success ? "Success" : "Failed"}</span></td>
+      </tr>`).join("");
+  }
+
+  async function loadAll() {
+    await Promise.all([loadRequests(), loadUsers(), loadUsage(), loadLogins()]);
+  }
+
+  async function clearRejected() {
+    if (!confirm("Delete all rejected requests? This cannot be undone.")) return;
+    try {
+      const r = await api("/admin/requests/rejected", "DELETE");
+      toast(r.message);
+      loadRequests();
+    } catch(e) {
+      toast("Error: " + e.message);
+    }
+  }
+
+  async function approveReq(id, btn) {
+    btn.disabled = true; btn.textContent = "…";
+    await fetch(`${API}/admin/approve/${id}?key=${ADMIN_KEY}`);
+    toast("Approved & email sent ✓");
+    loadRequests(); loadUsers();
+  }
+
+  async function rejectReq(id, btn) {
+    if (!confirm("Reject this request?")) return;
+    btn.disabled = true; btn.textContent = "…";
+    await fetch(`${API}/admin/reject/${id}?key=${ADMIN_KEY}`);
+    toast("Rejected & email sent");
+    loadRequests();
+  }
+
+  async function suspendUser(id, btn) {
+    if (!confirm("Suspend this user? They will be immediately logged out on next verify.")) return;
+    btn.disabled = true; btn.textContent = "…";
+    await api(`/admin/users/${id}/suspend`, "POST");
+    toast("User suspended");
+    loadUsers();
+  }
+
+  async function activateUser(id, btn) {
+    btn.disabled = true; btn.textContent = "…";
+    await api(`/admin/users/${id}/activate`, "POST");
+    toast("User activated ✓");
+    loadUsers();
+  }
+
+  async function deleteUser(id, name, btn) {
+    if (!confirm(`Delete ${name}?\n\nThis will permanently remove the account and all associated logs. This cannot be undone.`)) return;
+    btn.disabled = true; btn.textContent = "…";
+    try {
+      await api(`/admin/users/${id}`, "DELETE");
+      toast(`${name} deleted`);
+      loadUsers();
+    } catch(e) {
+      toast("Error: " + e.message);
+      btn.disabled = false; btn.textContent = "Delete";
+    }
+  }
+
+  function toggleCreateForm() {
+    const f = document.getElementById("create-form");
+    f.classList.toggle("open");
+    if (!f.classList.contains("open")) {
+      ["cf-name","cf-email","cf-inst","cf-pw"].forEach(id => document.getElementById(id).value = "");
+    }
+  }
+
+  async function createUser() {
+    const name  = document.getElementById("cf-name").value.trim();
+    const email = document.getElementById("cf-email").value.trim();
+    const inst  = document.getElementById("cf-inst").value.trim();
+    const pw    = document.getElementById("cf-pw").value;
+    if (!name || !email || !inst || !pw) { toast("Please fill in all fields"); return; }
+    try {
+      await api("/admin/users", "POST", { full_name: name, email, institution: inst, password: pw });
+      toast(`${name} created ✓`);
+      toggleCreateForm();
+      loadUsers();
+    } catch(e) {
+      toast("Error: " + e.message);
+    }
+  }
+
+  async function openUserModal(userId, name, email, institution) {
+    document.getElementById("modal-name").textContent = name;
+    document.getElementById("modal-meta").textContent = `${email} · ${institution}`;
+    document.getElementById("modal-total").textContent = "…";
+    document.getElementById("modal-logins").textContent = "…";
+    document.getElementById("modal-last").textContent = "…";
+    document.getElementById("modal-dur").textContent = "…";
+    document.getElementById("modal-logs-body").innerHTML = `<tr><td colspan="5" class="loading">Loading…</td></tr>`;
+    document.getElementById("modal-logins-body").innerHTML = `<tr><td colspan="3" class="loading">Loading…</td></tr>`;
+    document.getElementById("user-modal").classList.add("open");
+
+    const [allAnalysis, allLogins] = await Promise.all([
+      api("/admin/logs/analysis").catch(() => []),
+      api("/admin/logs/login").catch(() => []),
+    ]);
+
+    // Analysis logs for this user
+    const logs = allAnalysis.filter(r => r.user_id === userId);
+    document.getElementById("modal-total").textContent = logs.length;
+    if (logs.length) {
+      const last = logs.reduce((a, b) => new Date(a.created_at) > new Date(b.created_at) ? a : b);
+      document.getElementById("modal-last").textContent = fmt(last.created_at);
+      const totalDur = logs.reduce((s, r) => s + (r.duration_sec || 0), 0);
+      document.getElementById("modal-dur").textContent = totalDur.toFixed(1) + " s";
+      document.getElementById("modal-logs-body").innerHTML = logs.map(r => `
+        <tr>
+          <td>${fmt(r.created_at)}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.filename}">${r.filename}</td>
+          <td>${r.file_size_mb ?? "—"}</td>
+          <td>${r.duration_sec ?? "—"}</td>
+          <td>${r.ip_address ?? "—"}</td>
+        </tr>`).join("");
+    } else {
+      document.getElementById("modal-last").textContent = "—";
+      document.getElementById("modal-dur").textContent = "—";
+      document.getElementById("modal-logs-body").innerHTML = `<tr><td colspan="5" class="empty">No analyses yet.</td></tr>`;
+    }
+
+    // Login logs for this user (match by email)
+    const loginLogs = allLogins.filter(r => r.email === email);
+    document.getElementById("modal-logins").textContent = loginLogs.filter(r => r.success).length + " / " + loginLogs.length;
+    if (loginLogs.length) {
+      document.getElementById("modal-logins-body").innerHTML = loginLogs.map(r => `
+        <tr>
+          <td>${fmt(r.created_at)}</td>
+          <td>${r.ip_address ?? "—"}</td>
+          <td><span class="badge ${r.success ? "badge-active" : "badge-rejected"}">${r.success ? "Success" : "Failed"}</span></td>
+        </tr>`).join("");
+    } else {
+      document.getElementById("modal-logins-body").innerHTML = `<tr><td colspan="3" class="empty">No login records yet.</td></tr>`;
+    }
+  }
+
+  function closeModal() {
+    document.getElementById("user-modal").classList.remove("open");
+  }
+
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+</script>
+</body>
+</html>
