@@ -194,6 +194,8 @@ Status transitions written to `.json` sidecar only — never re-pickle BeatMetri
 3. `git push origin main && git push origin vX.Y.Z`
 4. `gh release create vX.Y.Z --title "MyoOptix vX.Y.Z" --notes "..."` 或在網頁建立
 5. 各平台 PyInstaller 打包後上傳 zip，更新 `RELEASE_STATUS.md`
+   - Mac: `MyoOptix-vX.Y.Z-mac.zip`
+   - Windows: `MyoOptix-vX.Y.Z-win.zip`
 
 ---
 
