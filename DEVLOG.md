@@ -110,6 +110,35 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-13 Windows — Collab Edition v1.0.0 Windows 打包 ✅
+
+**Windows 端完成 Collab Edition 打包並上傳至 GitHub。**
+
+### 完成項目
+- 建立 `collab_server/app/myooptix_collab_win.spec`（PyInstaller onedir spec）
+  - `cardio_py/` 以 datas 方式明確打包（Mac 端用 symlink，Windows 端直接指向 repo root）
+  - `annotation_tool/best_model.pth` 打包至 `_internal/annotation_tool/`（符合 `segmentation.py` 路徑解析）
+  - `assets/`, `ui/`, `api_client.py`, `token_store.py` 全部包入
+- 修正 `collab_server/app/main.py`：加入 `REPO_ROOT = APP_DIR.parent.parent` 並 `sys.path.insert(0, REPO_ROOT)`，讓 from-source 執行時能找到 `cardio_py`
+- 修正 `collab_server/app/assets/icon.png`：從 `docs/icon.png` 複製（原本 `heart.svg` fallback 顯示錯誤 icon）
+- 放大 `collab_server/app/ui/dialog_login.py`：width 480→640, icon 80×80→140×140, title 22→30px, 所有欄位字型/高度放大（使用者反映太小）
+
+### 打包指令（Windows）
+```bat
+cd collab_server\app
+.venv_win\Scripts\activate
+pyinstaller myooptix_collab_win.spec --noconfirm
+# → dist/MyoOptix/  (889 MB uncompressed)
+# → zip → MyoOptix-collab-v1.0.0-win.zip (379 MB)
+```
+
+### 已上傳
+- `MyoOptix-collab-v1.0.0-win.zip` → GitHub release `collab-v1.0.0` ✅
+- 壓縮後 379 MB，解壓 880 MB（含 `_internal/annotation_tool/best_model.pth` 93.4 MB）
+
+### 待 Mac 處理
+- 更新 `docs/index.html` Windows 下載按鈕（目前 "Coming soon" disabled）→ 改為 `collab-v1.0.0` release 連結
+
 ---
 
 ## 2026-07-12 Windows — v0.3.1 code review + Quick Analysis preset + Windows packaging

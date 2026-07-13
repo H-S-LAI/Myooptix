@@ -22,6 +22,19 @@ synthetic_gt.pkl
 *.png
 !docs/icon.png
 !docs/demo_assets/*.png
+!collab_server/app/assets/icon.png
+
+# PyInstaller build & dist
+build/
+dist/
+_internal/
+*.spec.bak
+MyoOptix.exe
+MyoOptix-win.zip
+myooptix_app/build/
+myooptix_app/dist/
+collab_server/app/build/
+collab_server/app/dist/
 *.DS_Store
 config.json
 memory/

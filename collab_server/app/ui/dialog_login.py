@@ -40,14 +40,14 @@ class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("MyoOptix")
-        self.setFixedWidth(480)
+        self.setFixedWidth(640)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self._worker = None
         self._build_ui()
 
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(36, 32, 36, 28)
+        root.setContentsMargins(56, 44, 56, 40)
         root.setSpacing(0)
 
         # ── header ───────────────────────────────────────────────────────────
@@ -57,25 +57,25 @@ class LoginDialog(QDialog):
             icon = QLabel()
             px = QPixmap(str(icon_path))
             px.setDevicePixelRatio(2.0)
-            icon.setPixmap(px.scaled(80, 80,
+            icon.setPixmap(px.scaled(140, 140,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation))
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             root.addWidget(icon)
-            root.addSpacing(8)
+            root.addSpacing(14)
 
         title = QLabel("MyoOptix")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet("font-size: 22px; font-weight: bold; color: #3b3a32;")
+        title.setStyleSheet("font-size: 30px; font-weight: bold; color: #3b3a32;")
         root.addWidget(title)
 
         sub = QLabel("Cardiac Organoid Motion Analysis")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sub.setStyleSheet("font-size: 12px; color: #8a8070;")
+        sub.setStyleSheet("font-size: 14px; color: #8a8070;")
         root.addWidget(sub)
-        root.addSpacing(10)
+        root.addSpacing(14)
 
-        _gs = "font-size: 10px; color: #b0a898; background: transparent;"
+        _gs = "font-size: 13px; color: #b0a898; background: transparent;"
         for text in (
             "Supported by 國家科學及技術委員會 補助專題研究計畫",
             "AI輔助與即時感測回饋之免疫藥物毒性分析晶片  NSTC 114-2640-B-038-001",
@@ -93,44 +93,44 @@ class LoginDialog(QDialog):
 
         # ── fields ───────────────────────────────────────────────────────────
         lbl_email = QLabel("Email")
-        lbl_email.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
+        lbl_email.setStyleSheet("font-size: 13px; font-weight: bold; color: #6b6456;")
         root.addWidget(lbl_email)
-        root.addSpacing(4)
+        root.addSpacing(5)
         self._email = QLineEdit()
         self._email.setPlaceholderText("your@email.com")
-        self._email.setFixedHeight(36)
+        self._email.setFixedHeight(44)
         root.addWidget(self._email)
-        root.addSpacing(12)
+        root.addSpacing(16)
 
         lbl_pw = QLabel("Password")
-        lbl_pw.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
+        lbl_pw.setStyleSheet("font-size: 13px; font-weight: bold; color: #6b6456;")
         root.addWidget(lbl_pw)
-        root.addSpacing(4)
+        root.addSpacing(5)
         self._password = QLineEdit()
         self._password.setEchoMode(QLineEdit.EchoMode.Password)
         self._password.setPlaceholderText("••••••••")
-        self._password.setFixedHeight(36)
+        self._password.setFixedHeight(44)
         self._password.returnPressed.connect(self._do_login)
         root.addWidget(self._password)
         root.addSpacing(6)
 
         # ── error label ──────────────────────────────────────────────────────
         self._err = QLabel("")
-        self._err.setStyleSheet("font-size: 11px; color: #c0392b;")
+        self._err.setStyleSheet("font-size: 13px; color: #c0392b;")
         self._err.setWordWrap(True)
         self._err.setVisible(False)
         root.addWidget(self._err)
-        root.addSpacing(16)
+        root.addSpacing(20)
 
         # ── login button ─────────────────────────────────────────────────────
         self._login_btn = QPushButton("Sign in")
         self._login_btn.setProperty("primary", True)
         self._login_btn.style().unpolish(self._login_btn)
         self._login_btn.style().polish(self._login_btn)
-        self._login_btn.setFixedHeight(38)
+        self._login_btn.setFixedHeight(46)
         self._login_btn.clicked.connect(self._do_login)
         root.addWidget(self._login_btn)
-        root.addSpacing(12)
+        root.addSpacing(16)
 
         root.addWidget(self._divider())
         root.addSpacing(12)
@@ -139,12 +139,12 @@ class LoginDialog(QDialog):
         reg_row = QHBoxLayout()
         reg_row.addStretch()
         reg_lbl = QLabel("Don't have an account?")
-        reg_lbl.setStyleSheet("font-size: 11px; color: #8a8070;")
+        reg_lbl.setStyleSheet("font-size: 13px; color: #8a8070;")
         reg_row.addWidget(reg_lbl)
         reg_btn = QPushButton("Request access")
         reg_btn.setFlat(True)
         reg_btn.setStyleSheet(
-            "font-size: 11px; color: #7c9c6e; font-weight: bold;"
+            "font-size: 13px; color: #7c9c6e; font-weight: bold;"
             "border: none; background: transparent; padding: 0;"
         )
         reg_btn.setCursor(Qt.CursorShape.PointingHandCursor)

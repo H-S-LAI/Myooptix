@@ -13,8 +13,10 @@ Startup flow:
 import sys
 from pathlib import Path
 
-APP_DIR = Path(__file__).parent
+APP_DIR  = Path(__file__).parent
+REPO_ROOT = APP_DIR.parent.parent   # myooptix/ repo root — contains cardio_py/
 sys.path.insert(0, str(APP_DIR))
+sys.path.insert(0, str(REPO_ROOT))
 
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThread, pyqtSignal
