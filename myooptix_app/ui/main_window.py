@@ -13,7 +13,10 @@ class MainWindow(QMainWindow):
         self.resize(1100, 720)
         self.setMinimumSize(QSize(860, 560))
 
-        icon_path = Path(__file__).parent.parent / "assets" / "heart.svg"
+        _assets = Path(__file__).parent.parent / "assets"
+        icon_path = _assets / "icon.png"
+        if not icon_path.exists():
+            icon_path = _assets / "heart.svg"
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
 

@@ -32,8 +32,12 @@ def _save_config(cfg: dict):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MyoOptix")
-    icon_path = os.path.join(os.path.dirname(__file__), "assets", "icon.png")
-    app.setWindowIcon(QIcon(icon_path))
+    _assets_dir = os.path.join(os.path.dirname(__file__), "assets")
+    icon_path = os.path.join(_assets_dir, "icon.png")
+    if not os.path.exists(icon_path):
+        icon_path = os.path.join(_assets_dir, "heart.svg")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     assets = os.path.join(os.path.dirname(__file__), "assets")
     app.setStyleSheet(build_style(assets))
 

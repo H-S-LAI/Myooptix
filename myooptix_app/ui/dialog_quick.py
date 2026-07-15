@@ -27,10 +27,19 @@ def _load_presets():
     except Exception:
         return [{"name": "TCY_4X", "scale": 2.915}, {"name": "TCY_10X", "scale": 1.175}]
 
+
+def _save_presets(presets):
+    try:
+        with open(_PRESETS_PATH, "w") as f:
+            json.dump({"presets": presets}, f, indent=2)
+    except Exception:
+        pass
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QFrame, QFileDialog,
     QProgressBar, QTextEdit, QApplication, QComboBox,
+    QDoubleSpinBox, QInputDialog,
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
@@ -250,18 +259,64 @@ class QuickAnalysisDialog(QDialog):
 
         root.addWidget(self._divider())
 
-        # ── Microscope preset ─────────────────────────────────────────────────
+        # ── Microscope preset + custom scale ──────────────────────────────────
         preset_lbl = QLabel("Microscope preset")
         preset_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
         root.addWidget(preset_lbl)
 
-        preset_row = QHBoxLayout()
         self._combo_preset = QComboBox()
-        for p in self._presets:
-            self._combo_preset.addItem(f"{p['name']}  ({p['scale']} µm/px)")
-        self._combo_preset.currentIndexChanged.connect(self._on_preset)
-        preset_row.addWidget(self._combo_preset)
-        root.addLayout(preset_row)
+        self._refresh_combo()
+        root.addWidget(self._combo_preset)
+
+        scale_row = QHBoxLayout()
+        lbl_scale = QLabel("Scale (µm/pixel)")
+        lbl_scale.setFixedWidth(130)
+        self._spin_scale = QDoubleSpinBox()
+        self._spin_scale.setRange(0.001, 100.0)
+        self._spin_scale.setSingleStep(0.001)
+        self._spin_scale.setDecimals(6)
+        self._spin_scale.setValue(self._scale)
+        self._save_preset_btn = QPushButton("+ Save")
+        self._save_preset_btn.setToolTip("Save current scale as a new preset")
+        self._save_preset_btn.setFixedSize(72, 28)
+        scale_row.addWidget(lbl_scale)
+        scale_row.addWidget(self._spin_scale, 1)
+        scale_row.addSpacing(6)
+        scale_row.addWidget(self._save_preset_btn)
+        root.addLayout(scale_row)
+
+        def _on_preset(idx):
+            if 0 <= idx < len(self._presets):
+                self._spin_scale.blockSignals(True)
+                self._spin_scale.setValue(self._presets[idx]["scale"])
+                self._spin_scale.blockSignals(False)
+
+        def _on_scale_edited():
+            self._combo_preset.blockSignals(True)
+            self._combo_preset.setCurrentIndex(-1)
+            self._combo_preset.blockSignals(False)
+
+        def _add_preset():
+            val = self._spin_scale.value()
+            name, ok = QInputDialog.getText(
+                self, "Save Preset", "Preset name:", text=f"Custom_{val:.3f}")
+            if not ok or not name.strip():
+                return
+            name = name.strip()
+            self._presets = [p for p in self._presets if p["name"] != name]
+            self._presets.append({"name": name, "scale": val})
+            _save_presets(self._presets)
+            self._refresh_combo()
+            for i, p in enumerate(self._presets):
+                if p["name"] == name:
+                    self._combo_preset.setCurrentIndex(i)
+                    break
+
+        self._combo_preset.currentIndexChanged.connect(_on_preset)
+        self._spin_scale.valueChanged.connect(_on_scale_edited)
+        self._save_preset_btn.clicked.connect(_add_preset)
+        self._combo_preset.setCurrentIndex(0)
+        _on_preset(0)
 
         root.addWidget(self._divider())
 
@@ -310,9 +365,12 @@ class QuickAnalysisDialog(QDialog):
         line.setStyleSheet("color: #d6cfc2;")
         return line
 
-    def _on_preset(self, idx):
-        if 0 <= idx < len(self._presets):
-            self._scale = self._presets[idx]["scale"]
+    def _refresh_combo(self):
+        self._combo_preset.blockSignals(True)
+        self._combo_preset.clear()
+        for p in self._presets:
+            self._combo_preset.addItem(f"{p['name']}  ({p['scale']} µm/px)")
+        self._combo_preset.blockSignals(False)
 
     # ── actions ───────────────────────────────────────────────────────────────
 
@@ -372,7 +430,7 @@ class QuickAnalysisDialog(QDialog):
             min_pct     = 0.15,
             max_pct     = 50.0,
             roi_boxes   = roi_boxes,
-            scale       = self._scale,
+            scale       = self._spin_scale.value(),
         )
         self._worker.stage.connect(self._on_stage)
         self._worker.finished.connect(self._on_finished)

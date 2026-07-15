@@ -23,6 +23,7 @@ synthetic_gt.pkl
 !docs/icon.png
 !docs/demo_assets/*.png
 !collab_server/app/assets/icon.png
+!myooptix_app/assets/icon.png
 
 # PyInstaller build & dist
 build/
