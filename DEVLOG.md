@@ -110,6 +110,15 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-15 Windows — Collab Edition v1.1.0
+
+- `collab_server/app/ui/dialog_quick.py`：新增顯微鏡 preset dropdown + Scale (µm/pixel) spinbox + "+ Save" 按鈕
+  - Worker 的 scale 從 hardcode `2.915` 改為由 dialog 傳入
+  - Preset 讀寫 `assets/presets.json`（與主版共用格式）
+- 下次打包時 release tag 用 `collab-v1.1.0`（Windows + Mac 各自上傳後通知對方）
+
+---
+
 ## 2026-07-15 Windows — v0.4.1 Update 通知版本比較修正
 
 - `updater.py` `check_for_update`：版本比較從字串 `!=` 改為 semantic `>`

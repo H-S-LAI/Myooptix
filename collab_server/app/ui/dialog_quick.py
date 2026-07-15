@@ -11,10 +11,12 @@ import time
 import pickle
 from pathlib import Path
 
+import json
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton, QFrame, QFileDialog,
-    QProgressBar, QTextEdit, QApplication,
+    QProgressBar, QTextEdit, QApplication, QComboBox,
+    QDoubleSpinBox, QInputDialog,
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
@@ -22,6 +24,22 @@ from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 APP_DIR = Path(__file__).parent.parent  # app/
 sys.path.insert(0, str(APP_DIR))
 from api_client import log_analysis, verify, APIError
+
+_PRESETS_PATH = APP_DIR / "assets" / "presets.json"
+
+
+def _load_presets():
+    try:
+        return json.loads(_PRESETS_PATH.read_text())["presets"]
+    except Exception:
+        return [{"name": "TCY_4X", "scale": 2.915}, {"name": "TCY_10X", "scale": 1.175}]
+
+
+def _save_presets(presets):
+    try:
+        _PRESETS_PATH.write_text(json.dumps({"presets": presets}, indent=2))
+    except Exception:
+        pass
 
 
 # ── Network Monitor ───────────────────────────────────────────────────────────
@@ -69,13 +87,14 @@ class _QuickWorker(QThread):
     finished = pyqtSignal(str, float)   # pkl_path, elapsed_sec
     error    = pyqtSignal(str)
 
-    def __init__(self, video_path, seg_method, min_pct, max_pct, roi_boxes, parent=None):
+    def __init__(self, video_path, seg_method, min_pct, max_pct, roi_boxes, scale=2.915, parent=None):
         super().__init__(parent)
         self.video_path = video_path
         self.seg_method = seg_method
         self.min_pct    = min_pct
         self.max_pct    = max_pct
         self.roi_boxes  = roi_boxes
+        self.scale      = scale
         self._abort     = False
 
     def abort(self):
@@ -130,8 +149,7 @@ class _QuickWorker(QThread):
 
             # ── KLT tracking ─────────────────────────────────────────────────
             self.stage.emit(f"KLT tracking ({len(masks)} ROI(s))…")
-            scale   = 2.915
-            results = track_video(self.video_path, masks, scale_um_per_px=scale)
+            results = track_video(self.video_path, masks, scale_um_per_px=self.scale)
 
             # ── MDP + force ───────────────────────────────────────────────────
             roi_list = []
@@ -142,7 +160,7 @@ class _QuickWorker(QThread):
                 signal, axis = select_dominant_signal(tr.signal_x, tr.signal_y, tr.time)
                 mdp   = calculate_mdp_metrics(signal, tr.time)
                 force = compute_contractility(tr.signal_mag, tr.time, frame_rate, mdp.peak_locs)
-                morph = compute_mask_morphology(masks[i], scale)
+                morph = compute_mask_morphology(masks[i], self.scale)
                 roi_list.append({
                     'roi_index': i + 1, 'dominant_axis': axis,
                     'signal_x': tr.signal_x, 'signal_y': tr.signal_y,
@@ -157,7 +175,7 @@ class _QuickWorker(QThread):
                 'video_path': self.video_path,
                 'frame_rgb':  frame_rgb,
                 'roi_list':   roi_list,
-                'params':     {'k_mult': 1.0, 'min_dist': 0.7, 'scale_um_per_px': scale},
+                'params':     {'k_mult': 1.0, 'min_dist': 0.7, 'scale_um_per_px': self.scale},
                 'status':     'Computed',
             }
             with open(pkl_path, 'wb') as f:
@@ -185,6 +203,7 @@ class QuickAnalysisDialog(QDialog):
         self._worker     = None
         self._roi_boxes  = []
         self._online     = True
+        self._presets    = _load_presets()
         self._build_ui()
         self._start_net_monitor()
 
@@ -275,6 +294,67 @@ class QuickAnalysisDialog(QDialog):
 
         root.addWidget(self._divider())
 
+        # ── Microscope preset + custom scale ──────────────────────────────────
+        preset_lbl = QLabel("Microscope preset")
+        preset_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #6b6456;")
+        root.addWidget(preset_lbl)
+
+        self._combo_preset = QComboBox()
+        self._refresh_combo()
+        root.addWidget(self._combo_preset)
+
+        scale_row = QHBoxLayout()
+        lbl_scale = QLabel("Scale (µm/pixel)")
+        lbl_scale.setFixedWidth(130)
+        self._spin_scale = QDoubleSpinBox()
+        self._spin_scale.setRange(0.001, 100.0)
+        self._spin_scale.setSingleStep(0.001)
+        self._spin_scale.setDecimals(6)
+        self._spin_scale.setValue(self._presets[0]["scale"] if self._presets else 2.915)
+        self._save_preset_btn = QPushButton("+ Save")
+        self._save_preset_btn.setToolTip("Save current scale as a new preset")
+        self._save_preset_btn.setFixedSize(72, 28)
+        scale_row.addWidget(lbl_scale)
+        scale_row.addWidget(self._spin_scale, 1)
+        scale_row.addSpacing(6)
+        scale_row.addWidget(self._save_preset_btn)
+        root.addLayout(scale_row)
+
+        def _on_preset(idx):
+            if 0 <= idx < len(self._presets):
+                self._spin_scale.blockSignals(True)
+                self._spin_scale.setValue(self._presets[idx]["scale"])
+                self._spin_scale.blockSignals(False)
+
+        def _on_scale_edited():
+            self._combo_preset.blockSignals(True)
+            self._combo_preset.setCurrentIndex(-1)
+            self._combo_preset.blockSignals(False)
+
+        def _add_preset():
+            val = self._spin_scale.value()
+            name, ok = QInputDialog.getText(
+                self, "Save Preset", "Preset name:", text=f"Custom_{val:.3f}")
+            if not ok or not name.strip():
+                return
+            name = name.strip()
+            self._presets = [p for p in self._presets if p["name"] != name]
+            self._presets.append({"name": name, "scale": val})
+            _save_presets(self._presets)
+            self._refresh_combo()
+            for i, p in enumerate(self._presets):
+                if p["name"] == name:
+                    self._combo_preset.setCurrentIndex(i)
+                    break
+
+        self._combo_preset.currentIndexChanged.connect(_on_preset)
+        self._spin_scale.valueChanged.connect(_on_scale_edited)
+        self._save_preset_btn.clicked.connect(_add_preset)
+        self._combo_preset.setCurrentIndex(0)
+        _on_preset(0)
+
+        root.addWidget(self._divider())
+
         # progress
         self._status_lbl = QLabel("Ready.")
         self._status_lbl.setStyleSheet("font-size: 11px; color: #6b6456;")
@@ -313,6 +393,13 @@ class QuickAnalysisDialog(QDialog):
         root.addLayout(btn_row)
 
         self.adjustSize()
+
+    def _refresh_combo(self):
+        self._combo_preset.blockSignals(True)
+        self._combo_preset.clear()
+        for p in self._presets:
+            self._combo_preset.addItem(f"{p['name']}  ({p['scale']} µm/px)")
+        self._combo_preset.blockSignals(False)
 
     def _divider(self):
         line = QFrame()
