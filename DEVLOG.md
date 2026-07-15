@@ -110,6 +110,26 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-15 Windows — v0.4.0 新功能 + Bug 修正
+
+### 新功能
+- **Quick Analysis 顯微鏡換算輸入**：新增 Scale (µm/pixel) spinbox + "+ Save" 按鈕，
+  讓外部實驗室可以輸入自己的換算值並儲存為 preset（與 Batch Compute 一致）
+- **Merge Report 新增 Equivalent Diameter**：`_Merged_Reports` 輸出現在包含 `Equivalent_Diameter_um` 欄位
+
+### Bug 修正
+- **App icon 修正**：`main_window.py` 硬寫 `heart.svg`，導致所有子 dialog（Batch Compute 等）
+  顯示紅心而非 MyoOptix logo。改為優先讀 `icon.png`，fallback 才用 `heart.svg`
+- `myooptix_app/assets/icon.png` 新增 logo 檔（從 `docs/icon.png` 複製）
+
+### 打包注意
+- 需重新打包 Windows v0.4.0 exe
+- Mac 也需 pull 後重新打包（同樣有 icon + diameter 修正）
+
+### commit: `289bce1`
+
+---
+
 ## 2026-07-15 Windows — 跨版本 Bug 修正（v0.3.1 → 需重新打包）
 
 ### 問題根因
