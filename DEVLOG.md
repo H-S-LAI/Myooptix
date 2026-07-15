@@ -110,6 +110,50 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-15 Windows — 跨版本 Bug 修正（v0.3.1 → 需重新打包）
+
+### 問題根因
+在乾淨 Windows 機器上測試 v0.3.1 時發現兩個 bug：
+
+**Bug 1 — UNet model 找不到（FileNotFoundError）**
+- 根本原因：PyInstaller 6.x 新增 `_internal/` 目錄，導致 `segmentation.py` 的
+  `Path(__file__).parent.parent.parent` 解析到 `_internal/` 而非 exe 資料夾。
+  v0.2.0 時 PyInstaller 無此層，路徑剛好正確，所以才沒發現。
+- 開發機不會出錯，因為有舊的 model 檔案或 `__file__` 解析結果不同。
+- 修正：`cardio_py/core/segmentation.py` 改用 `_resolve_weights()`，
+  先檢查 `sys._MEIPASS/annotation_tool/`（collab 打包路徑），
+  再 fallback 到 `exe_folder/annotation_tool/`（主版下載路徑）。
+
+**Bug 2 — Update 通知顯示 Collab 版**
+- 根本原因：`collab-v1.0.0` release 上傳後被 GitHub 標為 Latest，
+  `updater.py` 呼叫 `/releases/latest` 就拿到 collab tag。
+- 修正：`check_for_update` 改為查 `/releases` 列表並以 `^v\d+\.\d+\.\d+$` 過濾，
+  只對主版 tag 反應。
+- 另修正 `download_app_update`：改為依序嘗試
+  `MyoOptix-{tag}-{platform}.zip`（有版本號）→ `MyoOptix-{platform}.zip`（無版本號），
+  解決 Mac/Windows 資產命名不一致問題。
+- GitHub 上已將 `collab-v1.0.0` 改為 Pre-release。
+
+### 其他修正
+- `myooptix.spec`：加入 `annotation_tool/best_model.pth` 到 datas，model 隨 exe 打包，
+  不再需要首次啟動下載。
+- `main.py`：移除 `ModelDownloadDialog` 啟動檢查（model 已打包）。
+- commit: `f790cd1`
+
+### Mac 注意事項
+1. 下次打包 Mac 版時請 `git pull`，`segmentation.py` 已修正路徑解析。
+2. `myooptix_mac.spec` 也需要加 `annotation_tool/best_model.pth` 到 datas（同 Windows）。
+3. 建議版本號升至 **v0.3.2** 反映這些修正。
+4. 未來 GitHub release 命名請統一：Mac 用 `MyoOptix-mac.zip`（不加版本號），
+   Windows 用 `MyoOptix-win.zip`，讓 updater 不需猜測。
+
+### 如何在乾淨機器驗證（避免再次漏掉）
+- 把 `dist/MyoOptix/` 複製到 Desktop 獨立資料夾，刪除其中 `annotation_tool/`，
+  再啟動 exe — 模擬乾淨安裝。
+- 把 `version.py` 改成 `0.0.1` 再打包測試 update 通知。
+
+---
+
 ## 2026-07-13 Windows — Collab Edition v1.0.0 Windows 打包 ✅
 
 **Windows 端完成 Collab Edition 打包並上傳至 GitHub。**
