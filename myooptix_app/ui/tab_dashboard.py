@@ -489,6 +489,7 @@ class DashboardTab(QWidget):
             'Interbeatsegment_s':       'Interbeat Segment',
             'Contractility_Mag_um_s':   'Contractility',
             'Contractility_Std_um_s':   'Contractility Std',
+            'Equivalent_Diameter_um':   'Equivalent Diameter (µm)',
         }
 
         try:
