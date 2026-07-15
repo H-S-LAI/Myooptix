@@ -92,9 +92,14 @@ def check_for_update(current_version: str) -> dict | None:
     """
     import re
     _VER_RE = re.compile(r"^v\d+\.\d+\.\d+$")
+
+    def _ver(s):
+        try:
+            return tuple(int(x) for x in s.split("."))
+        except Exception:
+            return (0, 0, 0)
+
     try:
-        # /releases/latest can return collab tags if they were uploaded more recently.
-        # Fetch all releases and pick the newest vX.Y.Z tag instead.
         url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases?per_page=20"
         req = urllib.request.Request(
             url,
@@ -110,13 +115,13 @@ def check_for_update(current_version: str) -> dict | None:
             if not _VER_RE.match(tag):
                 continue  # skip collab/model-weights/other tags
             latest = tag.lstrip("v")
-            if latest != current_version:
+            if _ver(latest) > _ver(current_version):
                 return {
                     "tag": tag,
                     "url": release.get("html_url", RELEASES_URL),
                     "body": release.get("body", ""),
                 }
-            break  # same version → up to date
+            break  # latest is same or older → up to date
     except Exception:
         pass
     return None

@@ -110,6 +110,15 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-15 Windows — v0.4.1 Update 通知版本比較修正
+
+- `updater.py` `check_for_update`：版本比較從字串 `!=` 改為 semantic `>`
+  （tuple 比較），避免本機版本比 GitHub 新時仍跳出 update dialog
+- version: 0.4.0 → 0.4.1
+- commit: 見下方 v0.4.0 後續
+
+---
+
 ## 2026-07-15 Windows — v0.4.0 新功能 + Bug 修正
 
 ### 新功能
