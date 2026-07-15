@@ -7,18 +7,21 @@
 #
 from pathlib import Path
 
-ROOT = Path(SPECPATH)  # app/
+APP_DIR   = Path(SPECPATH)           # collab_server/app/
+REPO_ROOT = APP_DIR.parent.parent    # repo root — contains annotation_tool/
+ROOT = APP_DIR  # backwards compat alias
 
 a = Analysis(
     ["main.py"],
-    pathex=[str(ROOT)],
+    pathex=[str(APP_DIR), str(REPO_ROOT)],
     binaries=[],
     datas=[
-        (str(ROOT / "assets"),   "assets"),
-        (str(ROOT / "cardio_py"), "cardio_py"),
+        (str(ROOT / "assets"),    "assets"),
+        (str(REPO_ROOT / "cardio_py"), "cardio_py"),
         (str(ROOT / "ui"),        "ui"),
         (str(ROOT / "api_client.py"),  "."),
         (str(ROOT / "token_store.py"), "."),
+        (str(REPO_ROOT / "annotation_tool" / "best_model.pth"), "annotation_tool"),
     ],
     hiddenimports=[
         "segmentation_models_pytorch",
@@ -64,7 +67,7 @@ app = BUNDLE(
     icon=str(ROOT / "assets" / "icon.png"),
     bundle_identifier="com.tmu.myooptix.collab",
     info_plist={
-        "CFBundleShortVersionString": "1.0.0",
+        "CFBundleShortVersionString": "1.1.0",
         "CFBundleName": "MyoOptix",
         "NSHighResolutionCapable": True,
     },

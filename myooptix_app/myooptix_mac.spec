@@ -64,7 +64,7 @@ app = BUNDLE(
     icon=None,
     bundle_identifier="com.tmu.myooptix",
     info_plist={
-        "CFBundleShortVersionString": "0.3.0",
+        "CFBundleShortVersionString": "0.4.1",
         "CFBundleName": "MyoOptix",
         "NSHighResolutionCapable": True,
     },
