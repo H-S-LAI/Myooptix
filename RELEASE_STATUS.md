@@ -9,7 +9,7 @@ Both sides should update this file before pushing a release.
 | v0.2.0 | ✅ `MyoOptix-win.zip` | ✅ `MyoOptix-mac.zip` | |
 | v0.3.0 | ❌ skipped  | ✅ `MyoOptix_v0.3.0_Mac.zip` | Mac-only; superseded by v0.3.1 |
 | v0.3.1 | ✅ `MyoOptix-v0.3.1-win.zip` | ✅ `MyoOptix-v0.3.1-mac.zip` | Quick Analysis preset, toast close() fix |
-| v0.4.1 | ✅ `MyoOptix-win.zip` | ✅ `MyoOptix-v0.4.1-mac.zip` | Scale preset UI, semantic version check |
+| v0.4.1 | ✅ `MyoOptix-v0.4.1-win.zip` | ✅ `MyoOptix-v0.4.1-mac.zip` | Scale preset UI, semantic version check |
 | collab-v1.0.0 | ✅ `MyoOptix-collab-v1.0.0-win.zip` | ✅ `MyoOptix-collab-v1.0.0-mac.zip` | Collab Edition — separate app+server, see DEVLOG |
 | collab-v1.1.0 | ✅ `MyoOptix-collab-v1.1.0-win.zip` | ✅ `MyoOptix-collab-v1.1.0-mac.zip` | Collab: microscope scale preset UI |
 
