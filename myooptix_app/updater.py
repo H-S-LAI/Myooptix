@@ -12,7 +12,6 @@ import platform
 GITHUB_OWNER = "H-S-LAI"
 GITHUB_REPO  = "Myooptix"
 RELEASES_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases"
-API_LATEST   = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
 
 # Dedicated release tag that hosts best_model.pth as an asset
 WEIGHTS_TAG  = "model-weights"
@@ -21,9 +20,8 @@ WEIGHTS_URL  = (
     f"/releases/download/{WEIGHTS_TAG}/best_model.pth"
 )
 
-# Asset name pattern per platform
-_IS_MAC = platform.system() == "Darwin"
-APP_ASSET_NAME = "MyoOptix-mac.zip" if _IS_MAC else "MyoOptix-win.zip"
+_IS_MAC      = platform.system() == "Darwin"
+_PLATFORM    = "mac" if _IS_MAC else "win"
 
 
 def weights_path() -> Path:
@@ -47,53 +45,78 @@ def desktop_path() -> Path:
 def download_app_update(tag: str, progress_cb=None) -> Path:
     """
     Download the platform-appropriate app zip from a GitHub Release to the Desktop.
+    Tries versioned name first (MyoOptix-v0.3.1-mac.zip) then plain (MyoOptix-mac.zip).
     Returns the path to the downloaded zip.
     """
-    url = (
-        f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}"
-        f"/releases/download/{tag}/{APP_ASSET_NAME}"
-    )
-    dest = desktop_path() / APP_ASSET_NAME
-    req = urllib.request.Request(url, headers={"User-Agent": "MyoOptix-updater/1.0"})
-    with urllib.request.urlopen(req, timeout=300) as resp:
-        total = int(resp.headers.get("Content-Length", 0))
-        received = 0
-        chunk_size = 1 << 15
-        with open(dest, "wb") as fh:
-            while True:
-                buf = resp.read(chunk_size)
-                if not buf:
-                    break
-                fh.write(buf)
-                received += len(buf)
-                if progress_cb:
-                    progress_cb(received, total)
-    return dest
+    import urllib.error
+    candidates = [
+        f"MyoOptix-{tag}-{_PLATFORM}.zip",   # versioned: MyoOptix-v0.3.1-mac.zip
+        f"MyoOptix-{_PLATFORM}.zip",          # plain:     MyoOptix-mac.zip / MyoOptix-win.zip
+    ]
+    last_err = None
+    for asset_name in candidates:
+        url = (
+            f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}"
+            f"/releases/download/{tag}/{asset_name}"
+        )
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "MyoOptix-updater/1.0"})
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                dest = desktop_path() / asset_name
+                total = int(resp.headers.get("Content-Length", 0))
+                received = 0
+                chunk_size = 1 << 15
+                with open(dest, "wb") as fh:
+                    while True:
+                        buf = resp.read(chunk_size)
+                        if not buf:
+                            break
+                        fh.write(buf)
+                        received += len(buf)
+                        if progress_cb:
+                            progress_cb(received, total)
+            return dest
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                last_err = e
+                continue
+            raise
+    raise last_err or RuntimeError(f"No app asset found for tag {tag} on {_PLATFORM}")
 
 
 def check_for_update(current_version: str) -> dict | None:
     """
     Query GitHub Releases API.
-    Returns dict(tag, url, body) if a newer tag is found, or None.
+    Returns dict(tag, url, body) if a newer main-app tag is found, or None.
+    Only considers releases with tags matching vX.Y.Z (ignores collab/other releases).
     """
+    import re
+    _VER_RE = re.compile(r"^v\d+\.\d+\.\d+$")
     try:
+        # /releases/latest can return collab tags if they were uploaded more recently.
+        # Fetch all releases and pick the newest vX.Y.Z tag instead.
+        url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases?per_page=20"
         req = urllib.request.Request(
-            API_LATEST,
+            url,
             headers={
                 "User-Agent": "MyoOptix-updater/1.0",
                 "Accept": "application/vnd.github+json",
             },
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read())
-        tag = data.get("tag_name", "")
-        latest = tag.lstrip("v")
-        if latest and latest != current_version:
-            return {
-                "tag": tag,
-                "url": data.get("html_url", RELEASES_URL),
-                "body": data.get("body", ""),
-            }
+            releases = json.loads(resp.read())
+        for release in releases:
+            tag = release.get("tag_name", "")
+            if not _VER_RE.match(tag):
+                continue  # skip collab/model-weights/other tags
+            latest = tag.lstrip("v")
+            if latest != current_version:
+                return {
+                    "tag": tag,
+                    "url": release.get("html_url", RELEASES_URL),
+                    "body": release.get("body", ""),
+                }
+            break  # same version → up to date
     except Exception:
         pass
     return None

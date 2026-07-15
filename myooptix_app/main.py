@@ -37,11 +37,6 @@ def main():
     assets = os.path.join(os.path.dirname(__file__), "assets")
     app.setStyleSheet(build_style(assets))
 
-    # Check for U-Net weights on first launch
-    if not updater.weights_exist():
-        from ui.dialog_update import ModelDownloadDialog
-        ModelDownloadDialog().exec()  # user can skip; Otsu will be used instead
-
     # Background update check (silent if no network)
     try:
         from version import VERSION

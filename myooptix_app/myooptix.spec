@@ -6,7 +6,7 @@
 #   pyinstaller myooptix.spec
 #
 # The resulting bundle is in dist/MyoOptix/
-# best_model.pth is NOT bundled — it is downloaded by the app at first launch.
+# best_model.pth is bundled under annotation_tool/ — no download needed at first launch.
 #
 import sys
 from pathlib import Path
@@ -18,9 +18,10 @@ a = Analysis(
     pathex=[str(ROOT / "myooptix_app"), str(ROOT)],
     binaries=[],
     datas=[
-        (str(ROOT / "myooptix_app" / "assets"), "assets"),
-        (str(ROOT / "cardio_py"),               "cardio_py"),
-        (str(ROOT / "version.py"),              "."),
+        (str(ROOT / "myooptix_app" / "assets"),             "assets"),
+        (str(ROOT / "cardio_py"),                           "cardio_py"),
+        (str(ROOT / "version.py"),                          "."),
+        (str(ROOT / "annotation_tool" / "best_model.pth"), "annotation_tool"),
     ],
     hiddenimports=[
         "segmentation_models_pytorch",
