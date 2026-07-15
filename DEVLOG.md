@@ -110,6 +110,17 @@ pyinstaller myooptix_collab_mac.spec --noconfirm
 - Admin 後台：approve/reject/suspend/activate/新增/刪除使用者/清除 rejected requests
 - 網路斷線監控：10 秒 verify 一次，斷線鎖定 Run 按鈕並顯示紅色 banner
 
+## 2026-07-15 Mac — v0.4.1 + Collab v1.1.0 Mac 打包完成
+
+- `myooptix_mac.spec`：補上 `annotation_tool/best_model.pth` 到 datas（與 Windows spec 對齊），
+  修正 `hooksconfig`、`bootloader_ignore_signals`、`upx_exclude` 欄位，版本號更新至 0.4.1
+- `collab_server/app/myooptix_collab_mac.spec`：修正 `cardio_py` 路徑（改用 `REPO_ROOT`，
+  原本錯誤指向 app 目錄），補上 `annotation_tool/best_model.pth`，版本號更新至 1.1.0
+- 已上傳 GitHub Release：
+  - `v0.4.1`：`MyoOptix-v0.4.1-mac.zip`（1.07 GB，含 model）
+  - `collab-v1.1.0`：`MyoOptix-collab-v1.1.0-mac.zip`（1.19 GB，含 model）
+- `docs/lab.html`：更新下載大小提示（Win ~400 MB / Mac ~1 GB）
+
 ## 2026-07-15 Windows — Collab Edition v1.1.0
 
 - `collab_server/app/ui/dialog_quick.py`：新增顯微鏡 preset dropdown + Scale (µm/pixel) spinbox + "+ Save" 按鈕
