@@ -75,12 +75,34 @@ def _scan_rows(video_root: str, project_name: str) -> list[dict]:
         return []
 
     pkl_dir = Path(video_root) / project_name / PKL_DIR
+
+    def _compute_stems(vpath, vroot):
+        vp = Path(vpath)
+        try:
+            rel   = vp.relative_to(vroot)
+            parts = rel.with_suffix('').parts
+            new = f"{Path(vroot).name}_{parts[0]}" if len(parts) == 1 else "_".join(parts)
+        except ValueError:
+            new = f"{vp.parent.name}_{vp.stem}"
+        old = f"{vp.parent.name}_{vp.stem}"
+        return new, old
+
+    all_stems = [_compute_stems(v['path'], video_root) for v in videos]
+    old_stem_counts = {}
+    for _, old in all_stems:
+        old_stem_counts[old] = old_stem_counts.get(old, 0) + 1
+
     rows = []
-    for v in videos:
-        vp   = Path(v['path'])
-        # matches _get_pkl_path: parent.name (Day folder) + stem
-        stem = f"{vp.parent.name}_{vp.stem}"
-        pkl  = pkl_dir / f"{stem}.pkl"
+    for v, (new_stem, old_stem) in zip(videos, all_stems):
+        # prefer new pkl; fall back to old pkl only when no old-stem collision exists
+        pkl = pkl_dir / f"{new_stem}.pkl"
+        if not pkl.exists() and new_stem != old_stem and old_stem_counts.get(old_stem, 0) == 1:
+            fallback = pkl_dir / f"{old_stem}.pkl"
+            if fallback.exists():
+                pkl = fallback
+        stem = pkl.stem
+        if not pkl.exists():
+            stem = new_stem
         sidecar = pkl.with_suffix('.json')
 
         computed     = pkl.exists()
@@ -105,6 +127,7 @@ def _scan_rows(video_root: str, project_name: str) -> list[dict]:
             'day':          v['day'],
             'filename':     v['filename'],
             'path':         v['path'],
+            'stem':         stem,
             'computed':     computed,
             'reviewed':     reviewed,
             'last_updated': last_updated,
@@ -398,6 +421,7 @@ class DashboardTab(QWidget):
             scale=default_scale,
             k_mult=1.0,
             min_dist=0.7,
+            video_root=self._video_root,
             parent=self,
         )
         dlg.exec()
@@ -412,10 +436,11 @@ class DashboardTab(QWidget):
                 "Please check the box next to video(s) you want to review.")
             return
         project_root = Path(self._video_root) / self._project_name
+        path_to_stem_rev = {row['path']: row['stem'] for row in self._rows if row.get('computed')}
         for vp in paths:
             p = Path(vp)
-            pkl_path = str(project_root / "_pkl_for_review" /
-                           f"{p.parent.name}_{p.stem}.pkl")
+            stem = path_to_stem_rev.get(vp, f"{p.parent.name}_{p.stem}")
+            pkl_path = str(project_root / "_pkl_for_review" / f"{stem}.pkl")
             if not Path(pkl_path).exists():
                 QMessageBox.warning(self, "Not computed",
                     f"{p.name} has not been computed yet. Skipping.")
@@ -438,11 +463,20 @@ class DashboardTab(QWidget):
         checked_paths = self.get_checked_paths()
         candidate_paths = checked_paths if checked_paths else [r['path'] for r in self._rows]
 
+        path_to_stem = {row['path']: row['stem'] for row in self._rows if row.get('computed')}
+
         xlsx_files = []
         skipped_not_reviewed = 0
         for vp in candidate_paths:
             p    = Path(vp)
-            stem = f"{p.parent.name}_{p.stem}"
+            stem = path_to_stem.get(vp)
+            if stem is None:
+                try:
+                    rel   = p.relative_to(self._video_root)
+                    parts = rel.with_suffix('').parts
+                    stem  = f"{Path(self._video_root).name}_{parts[0]}" if len(parts) == 1 else "_".join(parts)
+                except ValueError:
+                    stem  = f"{p.parent.name}_{p.stem}"
             # check Reviewed status via sidecar
             sidecar = pkl_dir / f"{stem}.json"
             is_reviewed = False
@@ -493,15 +527,27 @@ class DashboardTab(QWidget):
         }
 
         try:
-            # build video list (stem = "{Day}_{VideoName}")
+            # build stem → row mapping (effective stem resolved in _scan_rows)
+            stem_to_row = {row['stem']: row for row in self._rows}
+
+            # build video list
             videos = []
             for f in xlsx_files:
-                stem  = f.name.replace("_analysis_results.xlsx", "")
-                parts = stem.split("_", 1)
+                stem = f.name.replace("_analysis_results.xlsx", "")
+                row  = stem_to_row.get(stem)
+                if row:
+                    exp      = row['exp']
+                    time_val = row['day']
+                    vid_name = Path(row['filename']).stem
+                else:
+                    exp      = self._project_name
+                    rem      = stem.split("_", 1)
+                    time_val = rem[0] if len(rem) > 1 else stem
+                    vid_name = rem[1] if len(rem) > 1 else stem
                 videos.append({
-                    'exp_name':   self._project_name,
-                    'time':       parts[0] if len(parts) > 1 else stem,
-                    'video_name': parts[1] if len(parts) > 1 else stem,
+                    'exp_name':   exp,
+                    'time':       time_val,
+                    'video_name': vid_name,
                     'excel_path': str(f),
                 })
 

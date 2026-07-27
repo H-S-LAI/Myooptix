@@ -217,6 +217,7 @@ def calculate_mdp_metrics(
     time: np.ndarray,
     k_multiplier: float = 1.0,
     min_peak_distance_sec: float = 0.7,
+    force_flipped: "bool | None" = None,
 ) -> BeatMetrics:
     """
     Full MDP analysis for one signal (X or Y axis velocity).
@@ -238,7 +239,11 @@ def calculate_mdp_metrics(
     min_dist_samples = max(1, int(min_peak_distance_sec / dt))
 
     min_height = k_multiplier * np.std(signal)
-    is_flipped, dom_sig = morphology_flip_test(time, signal, min_height, min_peak_distance_sec)
+    if force_flipped is not None:
+        is_flipped = force_flipped
+        dom_sig = -signal if is_flipped else signal.copy()
+    else:
+        is_flipped, dom_sig = morphology_flip_test(time, signal, min_height, min_peak_distance_sec)
     result.is_flipped = is_flipped
     result.signal_display = dom_sig
 

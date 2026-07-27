@@ -13,11 +13,25 @@ from PyQt6.QtCore import QThread, pyqtSignal
 PKL_DIR = "_pkl_for_review"
 
 
-def _get_pkl_path(video_path: str, project_root: str) -> str:
+def _make_stem(video_path: str, video_root: str = "") -> str:
+    """Unique stem including exp-group prefix to avoid collision across experiment folders."""
     p = Path(video_path)
+    if video_root:
+        try:
+            rel = p.relative_to(video_root)
+            parts = rel.with_suffix('').parts
+            if len(parts) == 1:
+                return f"{Path(video_root).name}_{parts[0]}"
+            return "_".join(parts)
+        except ValueError:
+            pass
+    return f"{p.parent.name}_{p.stem}"
+
+
+def _get_pkl_path(video_path: str, project_root: str, video_root: str = "") -> str:
     pkl_dir = Path(project_root) / PKL_DIR
     pkl_dir.mkdir(exist_ok=True)
-    return str(pkl_dir / f"{p.parent.name}_{p.stem}.pkl")
+    return str(pkl_dir / f"{_make_stem(video_path, video_root)}.pkl")
 
 
 def _compute_one(video_path, masks, scale_um_per_px, k_mult, min_dist, stage_cb=None):
@@ -94,10 +108,12 @@ class ComputeWorker(QThread):
 
     def __init__(self, video_paths, project_root, seg_method,
                  scale, k_mult, min_dist,
-                 otsu_min_pct=0.15, otsu_max_pct=50.0, parent=None):
+                 otsu_min_pct=0.15, otsu_max_pct=50.0,
+                 video_root: str = "", parent=None):
         super().__init__(parent)
         self.video_paths  = video_paths
         self.project_root = project_root
+        self.video_root   = video_root
         self.seg_method   = seg_method
         self.scale        = scale
         self.k_mult       = k_mult
@@ -119,8 +135,7 @@ class ComputeWorker(QThread):
             if self._abort:
                 break
 
-            p    = Path(vp)
-            stem = f"{p.parent.name}_{p.stem}"
+            stem = _make_stem(vp, self.video_root)
             self.progress.emit(idx, total, stem)
 
             try:
@@ -135,7 +150,7 @@ class ComputeWorker(QThread):
                 data = _compute_one(vp, masks, self.scale, self.k_mult, self.min_dist,
                                     stage_cb=_cb)
 
-                pkl_path = _get_pkl_path(vp, self.project_root)
+                pkl_path = _get_pkl_path(vp, self.project_root, self.video_root)
                 with open(pkl_path, 'wb') as f:
                     pickle.dump(data, f)
 

@@ -242,6 +242,46 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 - Bumped version to v0.3.1 (Windows-side fixes warrant a patch bump)
 - Built `MyoOptix-win.zip` via `myooptix.spec` — uploaded to GitHub v0.3.1 release
 
+## 2026-07-27 Windows — v0.5.0：PKL stem collision fix、Group fix、Lock Flip
+
+### Bug 修正
+
+**Bug 1 — PKL stem 碰撞（同名影片互覆）**
+- 根本原因：`Ctrl/After/1.mov` 和 `doxo/After/1.mov` 都產生 stem `After_1`，
+  後算的影片 pkl 會蓋掉前一個，導致 Ctrl 的資料遺失。
+- 修正：`worker_compute.py` 新增 `_make_stem(video_path, video_root)` —
+  stem 改為包含 exp 前綴（`Ctrl_After_1`、`doxo_After_1`），跨資料夾不再碰撞。
+- 向下相容：`tab_dashboard.py` `_scan_rows` 對舊 pkl（無前綴）做 fallback —
+  只要該 old stem 沒有碰撞（count == 1），自動沿用舊 pkl，不強制重跑。
+
+**Bug 2 — Merge Report GROUP 顯示 project name 而非 exp 群組**
+- 根本原因：`_generate_report` 寫死用 `self._project_name` 作為 Group；
+  舊的 `stem_to_exp` 中繼修法因 stem 碰撞，doxo 的 stem 仍覆蓋 Ctrl。
+- 修正：`_generate_report` 改用 `stem_to_row`（有效 stem → row），
+  Group 從 `row['exp']`（`scan_video_folder` 解析的資料夾名稱）直接取得。
+
+**Bug 3 — Review 開啟錯誤 pkl**
+- 根本原因：`_open_review_selected` 仍用 `{parent}_{stem}` 舊格式找 pkl。
+- 修正：改用 `path_to_stem_rev` dict（effective stem from `_scan_rows`）查找。
+
+**Bug 4 — `video_root` 未傳入 Compute pipeline**
+- `ComputeDialog.__init__` 加 `video_root: str = ""` 參數
+- `ComputeWorker.__init__` 加 `video_root: str = ""` 參數
+- `_batch_compute` 傳入 `video_root=self._video_root`
+
+### 新功能
+
+**Lock Flip（Review dialog）**
+- `dialog_review.py`：新增 "Lock Flip" 按鈕；按下後鎖定目前 flip 狀態，
+  重新計算 MDP 時不再讓 `morphology_flip_test` 覆蓋使用者的選擇。
+- `cardio_py/core/mdp.py`：`calculate_mdp_metrics` 加入 `force_flipped: bool | None` 參數，
+  `None` = 自動偵測（預設），`True/False` = 強制指定，供 Review dialog 傳入。
+
+### 版本
+- `version.py`: 0.4.1 → 0.5.0
+
+---
+
 ## 2026-07-02 Mac — Algorithm + Analysis
 
 - Integrated PCA as default axis selection (`mdp.py`: `select_dominant_signal()`)

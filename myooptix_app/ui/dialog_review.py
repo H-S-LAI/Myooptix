@@ -486,6 +486,19 @@ class ReviewDialog(QDialog):
         self._d_slider.setValue(4)
         self._d_slider.valueChanged.connect(self._on_d_changed)
         pb.addWidget(self._d_slider)
+
+        self._lock_flip_btn = QPushButton("Lock Flip")
+        self._lock_flip_btn.setCheckable(True)
+        self._lock_flip_btn.setFixedHeight(26)
+        self._lock_flip_btn.setStyleSheet(
+            "QPushButton { background: #f0ebe0; color: #6b6456; border: 1px solid #c8c0b0;"
+            " border-radius: 4px; font-size: 11px; font-weight: bold; }"
+            "QPushButton:checked { background: #3b5a8a; color: #ffffff; border-color: #2a4a7a; }"
+            "QPushButton:hover { background: #e0dbd0; }"
+            "QPushButton:checked:hover { background: #2a4a7a; }"
+        )
+        self._lock_flip_btn.clicked.connect(self._on_lock_flip)
+        pb.addWidget(self._lock_flip_btn)
         lv.addWidget(param_box)
 
         lv.addStretch()
@@ -586,6 +599,12 @@ class ReviewDialog(QDialog):
         self._k_slider.blockSignals(False)
         self._d_slider.blockSignals(False)
 
+        locked = roi.get('locked_flip', None)
+        self._lock_flip_btn.blockSignals(True)
+        self._lock_flip_btn.setChecked(locked is not None)
+        self._lock_flip_btn.setText("Flip Locked" if locked is not None else "Lock Flip")
+        self._lock_flip_btn.blockSignals(False)
+
     def _step_roi(self, delta):
         if not self._data:
             return
@@ -600,6 +619,21 @@ class ReviewDialog(QDialog):
     def _on_d_changed(self, v):
         self._d_lbl.setText(f"{v*0.05:.2f} s")
         self._recompute_timer.start()
+
+    def _on_lock_flip(self, checked: bool):
+        roi = self._current_roi()
+        if roi is None:
+            return
+        if checked:
+            roi['locked_flip'] = getattr(roi.get('mdp'), 'is_flipped', False)
+            self._lock_flip_btn.setText("Flip Locked")
+        else:
+            roi.pop('locked_flip', None)
+            self._lock_flip_btn.setText("Lock Flip")
+        with open(self._pkl_path, 'wb') as f:
+            pickle.dump(self._data, f)
+        if not checked:
+            self._recompute_timer.start()
 
     # ── Overlay image ────────────────────────────────────────────────────────
 
@@ -697,7 +731,8 @@ class ReviewDialog(QDialog):
             from cardio_py.core.force import compute_contractility
             time   = roi['time']
             signal, axis = select_dominant_signal(roi['signal_x'], roi['signal_y'], time, k_mult, min_dist)
-            mdp    = calculate_mdp_metrics(signal, time, k_mult, min_dist)
+            locked = roi.get('locked_flip', None)
+            mdp    = calculate_mdp_metrics(signal, time, k_mult, min_dist, force_flipped=locked)
             force  = compute_contractility(roi['global_trace'], time, roi['frame_rate'], mdp.peak_locs)
             roi['dominant_axis'] = axis
             roi['signal']        = signal

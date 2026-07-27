@@ -52,10 +52,12 @@ def _spinrow(parent_lay, label, value, mn, mx, step, decimals, width=160):
 
 
 class ComputeDialog(QDialog):
-    def __init__(self, video_paths, project_root, scale, k_mult, min_dist, parent=None):
+    def __init__(self, video_paths, project_root, scale, k_mult, min_dist,
+                 video_root: str = "", parent=None):
         super().__init__(parent)
         self.video_paths  = video_paths
         self.project_root = project_root
+        self.video_root   = video_root
         self._scale       = scale
         self._worker      = None
         self._preview_idx = 0
@@ -451,6 +453,7 @@ class ComputeDialog(QDialog):
             min_dist=0.7,
             otsu_min_pct=self._spin_min_pct.value(),
             otsu_max_pct=self._spin_max_pct.value(),
+            video_root=self.video_root,
             parent=self,
         )
         self._worker.progress.connect(self._on_progress)
