@@ -4,6 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from jose import JWTError, jwt
@@ -86,6 +87,20 @@ create table if not exists public.analysis_logs (
   ip_address    text,
   created_at    timestamptz not null default now()
 );
+
+create table if not exists public.feedback (
+  id          uuid primary key default gen_random_uuid(),
+  name        text,
+  email       text,
+  os          text,
+  version     text,
+  description text not null,
+  image_b64   text,
+  status      text not null default 'open'
+                check (status in ('open', 'resolved')),
+  ip_address  text,
+  created_at  timestamptz not null default now()
+);
 """
 
 @asynccontextmanager
@@ -153,6 +168,14 @@ class CreateUserRequest(BaseModel):
     full_name: str
     institution: str
 
+class FeedbackRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    os: Optional[str] = None
+    version: Optional[str] = None
+    description: str
+    image_b64: Optional[str] = None
+
 # ── helpers ───────────────────────────────────────────────────────────────────
 def _get_ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for")
@@ -213,7 +236,8 @@ async def _send_rejection_email(email: str, full_name: str):
         html=f"<h2>Hi {full_name},</h2><p>Your registration was not approved. Contact {NOTIFY_EMAIL} for more information.</p>",
     )
 
-async def _send_registration_received_email(email: str, full_name: str):
+async def _send_registration_received_email(email: str, full_name: str, password: str):
+    masked = password[:3] + "***" if len(password) >= 3 else "***"
     await _send_email(
         to=email,
         subject="[MyoOptix] Registration received — pending review",
@@ -221,7 +245,40 @@ async def _send_registration_received_email(email: str, full_name: str):
         <h2>Hi {full_name},</h2>
         <p>We've received your registration request for <b>MyoOptix Collab</b>.</p>
         <p>Our team will review your application and notify you once it's approved.</p>
-        <p style="color:#8a8070;font-size:13px;">If you have any questions, contact us at {NOTIFY_EMAIL}.</p>
+        <table style="margin:16px 0;background:#f5f5f5;padding:12px 16px;border-radius:6px;">
+          <tr><td><b>Email</b></td><td style="padding-left:16px;">{email}</td></tr>
+          <tr><td><b>Password</b></td><td style="padding-left:16px;">{masked}</td></tr>
+        </table>
+        <p style="color:#8a8070;font-size:13px;">If you forget your password, please contact us at {NOTIFY_EMAIL}.</p>
+        """,
+    )
+
+async def _send_feedback_notify(fb_id: str, name: str, email: str, os_: str, version: str, description: str):
+    await _send_email(
+        to=NOTIFY_EMAIL,
+        subject=f"[MyoOptix] Bug Report from {name or 'Anonymous'}",
+        html=f"""
+        <h2>New Bug Report</h2>
+        <table>
+          <tr><td><b>Name</b></td><td>{name or '—'}</td></tr>
+          <tr><td><b>Email</b></td><td>{email or '—'}</td></tr>
+          <tr><td><b>OS</b></td><td>{os_ or '—'}</td></tr>
+          <tr><td><b>Version</b></td><td>{version or '—'}</td></tr>
+        </table>
+        <br><b>Description:</b>
+        <p style="background:#f5f5f5;padding:12px;border-radius:6px;">{description}</p>
+        <p style="color:#8a8070;font-size:12px;">View in admin: {API_BASE_URL}/web/admin.html</p>
+        """,
+    )
+
+async def _send_feedback_received(email: str, name: str):
+    await _send_email(
+        to=email,
+        subject="[MyoOptix] Bug report received — thank you",
+        html=f"""
+        <h2>Hi {name or "there"},</h2>
+        <p>We've received your bug report and will look into it. Thank you for helping us improve MyoOptix!</p>
+        <p style="color:#8a8070;font-size:13px;">If you have more details to add, feel free to reply to this email or submit another report.</p>
         """,
     )
 
@@ -243,7 +300,7 @@ async def register(body: RegisterRequest, request: Request):
             body.email, h, body.full_name, body.institution
         )
     await _send_admin_notify(str(row["id"]), body.full_name, body.email, body.institution)
-    await _send_registration_received_email(body.email, body.full_name)
+    await _send_registration_received_email(body.email, body.full_name, body.password)
     return {"message": "Registration submitted. You will receive an email when approved."}
 
 
@@ -390,6 +447,62 @@ async def admin_analysis_logs(_=Depends(require_admin)):
     async with _pool.acquire() as conn:
         rows = await conn.fetch("SELECT * FROM public.analysis_logs ORDER BY created_at DESC LIMIT 500")
     return [dict(r) for r in rows]
+
+
+# ── feedback ──────────────────────────────────────────────────────────────────
+@app.post("/feedback/report")
+async def submit_feedback(body: FeedbackRequest, request: Request):
+    if not body.description.strip():
+        raise HTTPException(400, "Description is required.")
+    if body.image_b64 and len(body.image_b64) > 7 * 1024 * 1024:
+        raise HTTPException(400, "Image too large. Please keep it under 5 MB.")
+    ip = _get_ip(request)
+    async with _pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """INSERT INTO public.feedback (name, email, os, version, description, image_b64, ip_address)
+               VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id""",
+            body.name, body.email, body.os, body.version,
+            body.description, body.image_b64, ip,
+        )
+    asyncio.create_task(_send_feedback_notify(
+        str(row["id"]), body.name or "", body.email or "",
+        body.os or "", body.version or "", body.description,
+    ))
+    if body.email:
+        asyncio.create_task(_send_feedback_received(body.email, body.name or ""))
+    return {"message": "Thank you! Your report has been submitted."}
+
+
+@app.get("/admin/feedback")
+async def admin_list_feedback(_=Depends(require_admin)):
+    async with _pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, name, email, os, version, description, status, created_at FROM public.feedback ORDER BY created_at DESC"
+        )
+    return [dict(r) for r in rows]
+
+
+@app.get("/admin/feedback/{fb_id}/image")
+async def admin_get_feedback_image(fb_id: str, _=Depends(require_admin)):
+    async with _pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT image_b64 FROM public.feedback WHERE id=$1", fb_id)
+    if not row:
+        raise HTTPException(404, "Not found")
+    return {"image_b64": row["image_b64"]}
+
+
+@app.post("/admin/feedback/{fb_id}/resolve")
+async def admin_resolve_feedback(fb_id: str, _=Depends(require_admin)):
+    async with _pool.acquire() as conn:
+        await conn.execute("UPDATE public.feedback SET status='resolved' WHERE id=$1", fb_id)
+    return {"message": "Marked as resolved."}
+
+
+@app.delete("/admin/feedback/{fb_id}")
+async def admin_delete_feedback(fb_id: str, _=Depends(require_admin)):
+    async with _pool.acquire() as conn:
+        await conn.execute("DELETE FROM public.feedback WHERE id=$1", fb_id)
+    return {"message": "Deleted."}
 
 
 @app.get("/")

@@ -109,6 +109,8 @@
     .badge-pending  { background: #fff3e0; color: #b45309; }
     .badge-approved, .badge-active { background: #e8f5e9; color: #2e7d32; }
     .badge-rejected, .badge-suspended { background: #fde8e8; color: var(--red); }
+    .badge-open     { background: #fff3e0; color: #b45309; }
+    .badge-resolved { background: #e8f5e9; color: #2e7d32; }
 
     /* ── ACTION BUTTONS ── */
     .act-btn {
@@ -240,6 +242,7 @@
       <button class="tab-btn" onclick="showPanel('users')">Users</button>
       <button class="tab-btn" onclick="showPanel('usage')">Usage</button>
       <button class="tab-btn" onclick="showPanel('logins')">Logins</button>
+      <button class="tab-btn" id="tab-feedback" onclick="showPanel('feedback')">Bug Reports <span id="feedback-badge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:.7rem;margin-left:4px;"></span></button>
     </nav>
     <button class="logout-btn" onclick="logout()">Sign out</button>
   </header>
@@ -315,6 +318,26 @@
         <table>
           <thead><tr><th>Time</th><th>Email</th><th>IP</th><th>Result</th></tr></thead>
           <tbody id="logins-body"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── BUG REPORTS ── -->
+    <div class="panel" id="panel-feedback">
+      <div class="panel-toolbar">
+        <div class="panel-title" style="margin-bottom:0">Bug Reports</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="feedback-filter" onchange="renderFeedback()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:.84rem;background:var(--bg);color:var(--text);">
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Name</th><th>Email</th><th>OS</th><th>Version</th><th>Description</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="feedback-body"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -496,7 +519,89 @@
   }
 
   async function loadAll() {
-    await Promise.all([loadRequests(), loadUsers(), loadUsage(), loadLogins()]);
+    await Promise.all([loadRequests(), loadUsers(), loadUsage(), loadLogins(), loadFeedback()]);
+  }
+
+  let _feedbackData = [];
+
+  async function loadFeedback() {
+    _feedbackData = await api("/admin/feedback").catch(() => []);
+    const openCount = _feedbackData.filter(r => r.status === "open").length;
+    const badge = document.getElementById("feedback-badge");
+    if (openCount > 0) {
+      badge.textContent = openCount;
+      badge.style.display = "inline";
+    } else {
+      badge.style.display = "none";
+    }
+    renderFeedback();
+  }
+
+  function renderFeedback() {
+    const filter = document.getElementById("feedback-filter").value;
+    const rows = filter === "all" ? _feedbackData : _feedbackData.filter(r => r.status === filter);
+    const tbody = document.getElementById("feedback-body");
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">No reports yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td style="white-space:nowrap">${fmt(r.created_at)}</td>
+        <td>${r.name || "—"}</td>
+        <td>${r.email || "—"}</td>
+        <td>${r.os || "—"}</td>
+        <td>${r.version || "—"}</td>
+        <td style="max-width:280px;">
+          <div style="max-height:60px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" onclick="showFeedbackDetail('${r.id}')" title="Click to expand">
+            ${r.description.replace(/</g,"&lt;").replace(/\n/g," ")}
+          </div>
+        </td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${r.status === "open"
+            ? `<button class="act-btn approve" onclick="resolveFeedback('${r.id}', this)">Resolve</button>`
+            : `<span style="color:var(--muted);font-size:.8rem;">Done</span>`}
+          <button class="act-btn delete" onclick="deleteFeedback('${r.id}', this)">Delete</button>
+        </td>
+      </tr>`).join("");
+  }
+
+  async function resolveFeedback(id, btn) {
+    btn.disabled = true; btn.textContent = "…";
+    await api(`/admin/feedback/${id}/resolve`, "POST");
+    toast("Marked as resolved ✓");
+    await loadFeedback();
+  }
+
+  async function deleteFeedback(id, btn) {
+    if (!confirm("Delete this report? This cannot be undone.")) return;
+    btn.disabled = true; btn.textContent = "…";
+    await api(`/admin/feedback/${id}`, "DELETE");
+    toast("Report deleted");
+    await loadFeedback();
+  }
+
+  async function showFeedbackDetail(id) {
+    const r = _feedbackData.find(x => x.id === id);
+    if (!r) return;
+    let imgHtml = "";
+    if (r.image_b64 !== null) {
+      try {
+        const res = await api(`/admin/feedback/${id}/image`);
+        if (res.image_b64) imgHtml = `<br><br><b>Screenshot:</b><br><img src="${res.image_b64}" style="max-width:100%;border-radius:8px;margin-top:8px;">`;
+      } catch(e) {}
+    }
+    const desc = r.description.replace(/</g,"&lt;").replace(/\n/g,"<br>");
+    document.getElementById("modal-name").textContent = r.name || "Anonymous";
+    document.getElementById("modal-meta").textContent = `${r.email || "no email"} · ${r.os || "unknown OS"} · v${r.version || "?"}`;
+    document.getElementById("modal-logs-body").innerHTML = `<tr><td colspan="5"><div style="padding:8px 0;line-height:1.6">${desc}${imgHtml}</div></td></tr>`;
+    document.getElementById("modal-total").textContent = fmt(r.created_at);
+    document.getElementById("modal-logins").textContent = r.status;
+    document.getElementById("modal-last").textContent = r.ip_address || "—";
+    document.getElementById("modal-dur").textContent = "—";
+    document.getElementById("modal-logins-body").innerHTML = "";
+    document.getElementById("user-modal").classList.add("open");
   }
 
   async function clearRejected() {
