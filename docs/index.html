@@ -319,6 +319,7 @@
     <a href="#demo">Demo</a>
     <a href="#request">Request Access</a>
     <a href="#download">Download</a>
+    <a href="#report">Report Bug</a>
   </nav>
 </header>
 
@@ -550,6 +551,50 @@
   </div>
 </section>
 
+<section id="report">
+  <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">Report a Bug</h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:28px;">Found something wrong? Let us know and we'll look into it.</p>
+  <form id="bug-form" style="display:flex;flex-direction:column;gap:14px;max-width:560px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Name <span style="font-weight:400;">(optional)</span></label>
+        <input id="rf-name" type="text" placeholder="Your name" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surf);color:var(--text);outline:none;">
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Email <span style="font-weight:400;">(optional)</span></label>
+        <input id="rf-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surf);color:var(--text);outline:none;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">OS <span style="font-weight:400;">(optional)</span></label>
+        <select id="rf-os" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surf);color:var(--text);outline:none;">
+          <option value="">Select OS…</option>
+          <option>macOS</option>
+          <option>Windows</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">App Version <span style="font-weight:400;">(optional)</span></label>
+        <input id="rf-version" type="text" placeholder="e.g. 1.1.0" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surf);color:var(--text);outline:none;">
+      </div>
+    </div>
+    <div>
+      <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Description <span style="color:var(--red,#e53e3e);">*</span></label>
+      <textarea id="rf-desc" rows="5" placeholder="Describe what happened and how to reproduce it…" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--surf);color:var(--text);outline:none;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+    <div>
+      <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Screenshot <span style="font-weight:400;">(optional, max 5 MB)</span></label>
+      <input id="rf-img" type="file" accept="image/*" style="font-size:.85rem;">
+      <p id="rf-img-err" style="color:var(--red,#e53e3e);font-size:.8rem;margin-top:4px;display:none;">Image too large. Please keep it under 5 MB.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button id="rf-submit" type="submit" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;">Send Report</button>
+      <p id="rf-status" style="font-size:.85rem;color:var(--muted);display:none;"></p>
+    </div>
+  </form>
+</section>
+
 <footer>
   <p>&copy; 2026 MyoOptix &nbsp;&middot;&nbsp; 賴竑劭 &nbsp;&middot;&nbsp; Taipei Medical University &nbsp;&middot;&nbsp; <a href="mailto:b101110099@tmu.edu.tw">b101110099@tmu.edu.tw</a></p>
   <p style="margin-top:8px;font-size:.75em;opacity:.65;">Supported by NSTC 114-2640-B-038-001 &mdash; AI輔助與即時感測回饋之免疫藥物毒性分析晶片</p>
@@ -664,6 +709,69 @@
       btn.textContent = "Submit access request";
     }
   }
+
+  // ── Bug report form ──────────────────────────────────────────────────────
+  const REPORT_API = "https://pleasant-miracle-production-95c3.up.railway.app";
+
+  document.getElementById("bug-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn    = document.getElementById("rf-submit");
+    const status = document.getElementById("rf-status");
+    const imgFile = document.getElementById("rf-img").files[0];
+    const imgErr  = document.getElementById("rf-img-err");
+
+    imgErr.style.display = "none";
+    if (imgFile && imgFile.size > 5 * 1024 * 1024) {
+      imgErr.style.display = "block";
+      return;
+    }
+
+    const desc = document.getElementById("rf-desc").value.trim();
+    if (!desc) {
+      document.getElementById("rf-desc").style.borderColor = "#e53e3e";
+      return;
+    }
+    document.getElementById("rf-desc").style.borderColor = "";
+
+    let image_b64 = null;
+    if (imgFile) {
+      image_b64 = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(imgFile);
+      });
+    }
+
+    btn.disabled = true; btn.textContent = "Sending…";
+    status.style.display = "none";
+
+    try {
+      const res = await fetch(`${REPORT_API}/feedback/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:        document.getElementById("rf-name").value.trim() || null,
+          email:       document.getElementById("rf-email").value.trim() || null,
+          os:          document.getElementById("rf-os").value || null,
+          version:     document.getElementById("rf-version").value.trim() || null,
+          description: desc,
+          image_b64,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Error");
+      status.style.color = "#38a169";
+      status.textContent = "✓ Report sent! Thank you.";
+      status.style.display = "block";
+      this.reset();
+    } catch(err) {
+      status.style.color = "#e53e3e";
+      status.textContent = "Failed to send. Please try again.";
+      status.style.display = "block";
+    } finally {
+      btn.disabled = false; btn.textContent = "Send Report";
+    }
+  });
 </script>
 </body>
 </html>
