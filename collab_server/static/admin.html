@@ -546,19 +546,15 @@
       return;
     }
     tbody.innerHTML = rows.map(r => `
-      <tr>
+      <tr style="cursor:pointer;" onclick="showFeedbackDetail('${r.id}')">
         <td style="white-space:nowrap">${fmt(r.created_at)}</td>
         <td>${r.name || "—"}</td>
         <td>${r.email || "—"}</td>
         <td>${r.os || "—"}</td>
         <td>${r.version || "—"}</td>
-        <td style="max-width:280px;">
-          <div style="max-height:60px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" onclick="showFeedbackDetail('${r.id}')" title="Click to expand">
-            ${r.description.replace(/</g,"&lt;").replace(/\n/g," ")}
-          </div>
-        </td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.description.replace(/</g,"&lt;")}</td>
         <td><span class="badge badge-${r.status}">${r.status}</span></td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <td style="display:flex;gap:6px;flex-wrap:wrap;" onclick="event.stopPropagation()">
           ${r.status === "open"
             ? `<button class="act-btn approve" onclick="resolveFeedback('${r.id}', this)">Resolve</button>`
             : `<span style="color:var(--muted);font-size:.8rem;">Done</span>`}
