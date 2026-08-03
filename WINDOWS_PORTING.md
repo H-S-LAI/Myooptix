@@ -99,36 +99,23 @@ Mac detected 19 beats, Windows detected 18. Mac found one extra boundary beat at
 
 ---
 
-## Step 3 — Packaging (TODO)
+## Step 3 — Packaging ✅ 已完成
 
-**Decision pending:** before packaging, need to decide on update strategy:
-- **Option A**: distribute folder + `.bat`, update via git pull script (lightweight, recommended for lab use)
-- **Option B**: PyInstaller standalone `.exe` (good for non-technical users, updates require full re-package ~1.5 GB)
-- **Option C**: PyInstaller + GitHub Releases auto-updater (best long-term, most complex to build)
+決策已定並執行：採 PyInstaller + GitHub Releases（原本三選一的 Option C）。
+`.spec` 檔已建立、icon 問題已解決，兩條產品線都已多次發版。**不要再重做這個決策。**
 
-When ready to package with PyInstaller:
-```
-pip install pyinstaller
-cd myooptix_app
-pyinstaller myooptix.spec
-```
+- **打包步驟一律看 `PACKAGING.md`**（主版與 Collab 版的 Windows/Mac 指令、打包後乾淨測試
+  checklist、UNet 找不到 model 等常見問題）。不要在本檔重複一份會過期的步驟。
+- **發版狀態看 `RELEASE_STATUS.md`**。每次發版兩台機器都要更新那張表。
 
-Use a `.spec` file (not ready yet — create before packaging):
-```python
-a = Analysis(
-    ['main.py'],
-    datas=[
-        ('../annotation_tool/best_model.pth', 'annotation_tool'),
-        ('assets/', 'assets/'),
-    ],
-    hiddenimports=['segmentation_models_pytorch', 'timm'],
-)
-```
+### 兩條產品線（不要搞混）
 
-Known issues to handle:
-- No `.ico` icon file yet (only `assets/heart.svg`) — convert to `.ico` before packaging
-- `cv2` may need explicit DLL inclusion
-- `torch` is ~1.5 GB in the bundle; confirm CPU-only version is installed
+| | 網站 | Release tag | GitHub Pre-release |
+|---|---|---|---|
+| 實驗室版（主版） | myooptix.com/lab.html | `vX.Y.Z` | 否 |
+| 分享版（Collab） | myooptix.com | `collab-vX.Y.Z` | **是，絕不可設為 Latest** |
+
+Collab 必須維持 Pre-release，否則主版的 `updater.py` 會把 collab 版當成新版本推播給實驗室使用者。
 
 ---
 
