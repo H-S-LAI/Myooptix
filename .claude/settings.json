@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/sync_status.sh",
+            "timeout": 20,
+            "statusMessage": "檢查跨機同步狀態"
+          }
+        ]
+      }
+    ]
+  }
+}

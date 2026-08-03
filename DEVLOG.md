@@ -292,3 +292,26 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 - Updated all callers to use `select_dominant_signal` (worker, review, quick, validate scripts)
 - Ran Before/After analysis on `Analysis_20260702` — pipeline confirmed working
 - Verified PCA angle stability: ROI shift ±20% → angle change ±10° (acceptable)
+
+---
+
+## 2026-08-03 Mac — 跨平台設定與文件同步
+
+- 新增 `.gitattributes`：統一兩台機器的換行。預設 `* text=auto eol=lf`（寫在 repo 層級，
+  不依賴各機器的 `core.autocrlf`）；`.bat`/`.cmd`/`.ps1` 強制 CRLF；`.command`/`.sh` 強制 LF；
+  影像、影片、`.mat`/`.pkl`/`.npy` 宣告為 binary
+  - **Windows 端 pull 前請先 commit 或 stash**。pull 後若出現大量 modified，那是換行被重寫，
+    執行 `git add --renormalize .` 即可回到乾淨，不要把它混進功能 commit
+  - 實際只有 `annotation_tool/flags.json` 與 `training_log.csv` 由 CRLF 轉 LF，內容零改動
+- `RELEASE_STATUS.md` 補上 v0.5.0（win ✅ 389MB / mac ⏳ 未上傳），並註明**判斷依據是 Release
+  的 assets，不是 Release 標題**（`collab-v1.1.0` 標題寫「(Windows)」但兩平台 zip 都在）
+- `WINDOWS_PORTING.md` 移除「Step 3 — Packaging (TODO)」整段。該決策早已定案（PyInstaller +
+  GitHub Releases）並多次發版，`.spec` 與 icon 問題皆已解決。改為指向 `PACKAGING.md` 與
+  `RELEASE_STATUS.md`，並補上兩條產品線的區別表
+- `handover/` 曾短暫存在後移除。跨機交接一律走本檔（DEVLOG），不另開平行管道
+
+### 待確認（Mac 端）
+- 上傳 Mac v0.5.0 zip：`gh release upload v0.5.0 myooptix_app/MyoOptix-v0.5.0-mac.zip`，
+  完成後把 `RELEASE_STATUS.md` 的 ⏳ 改為 ✅
+- `20260712_myooptix_collab_server/` 是 Offline 舊專案且已與 `collab_server/` 分岔
+  （各有對方沒有的檔案）。**兩端都不要改那個資料夾**，待使用者決定封存或刪除
