@@ -1,0 +1,50 @@
+# 跨平台換行規則（macOS 與 Windows 兩邊都會 clone 此 repo）
+#
+# 沒有這個檔的話，同一個檔案在兩台機器上會被 git 判定為「整個檔案都改了」，
+# diff 全是換行雜訊、review 無法看、合併必衝突。
+#
+# 本檔為 repo 層級設定，會覆蓋各機器的 core.autocrlf，
+# 因此不需要（也不應該）依賴每個人記得設定自己的 git。
+#
+# 新增或修改本檔後，需執行一次：
+#   git add --renormalize . && git commit -m "normalize line endings"
+
+# ── 預設 ──────────────────────────────────────────────
+# 文字檔在 repo 內與工作區一律 LF。不依賴機器設定，行為完全可預測。
+* text=auto eol=lf
+
+# ── 必須是 CRLF 的檔案 ────────────────────────────────
+# Windows 批次檔。cmd.exe 對 LF 的容忍有限，一旦出現 label / goto /
+# 多行 if 就可能解析錯誤。「啟動 MyoOptix.bat」是發給實驗室同伴的啟動器，
+# 這條規則直接影響他們能不能開起來。
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# ── 必須是 LF 的檔案 ──────────────────────────────────
+# macOS/Linux 啟動腳本，即使在 Windows 上編輯過也要保持 LF
+*.command text eol=lf
+*.sh      text eol=lf
+
+# ── 二進位：不做換行轉換，也不要產生文字 diff ──────────
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.icns binary
+*.ico  binary
+*.pdf  binary
+*.mp4  binary
+*.avi  binary
+*.mov  binary
+*.tif  binary
+*.tiff binary
+*.mat  binary
+*.fig  binary
+*.pkl  binary
+*.npy  binary
+*.npz  binary
+*.h5   binary
+*.xlsx binary
+*.docx binary
+*.pptx binary
