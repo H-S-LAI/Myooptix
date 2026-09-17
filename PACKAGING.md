@@ -44,12 +44,32 @@ pyinstaller myooptix_mac.spec --noconfirm
 
 輸出：`myooptix_app/dist/MyoOptix.app`
 
-打包完成後：
+`Info.plist` 的版本號會自動讀 `version.py`；icon 為 `assets/MyoOptix.icns`。
+
+**打包後乾淨測試（必做）：**
+1. 把 `dist/MyoOptix.app` 複製到 Desktop 獨立資料夾，**自己用滑鼠雙擊開啟**
+   （從 Claude/終端機環境啟動的結果不可靠）
+2. 確認 checklist：
+   - [ ] 開得起來、Dock 有 icon
+   - [ ] Quick Analysis → U-Net → 跑完一支影片、不報錯
+   - [ ] 關閉 app 後，`~/Library/Logs/DiagnosticReports/` 沒有新的 `MyoOptix-*.ips`
+     （已知 BUG：關閉時可能閃退，見 workspace `20260909_appbugfix/BUG-07`）
+3. 核對 app 內 `Contents/Resources/cardio_py/` 與要發布的 git tag 一致
+
+**打包完成後（壓縮）：**
 ```bash
-cd myooptix_app/dist
-zip -r MyoOptix-mac.zip MyoOptix.app
+cd myooptix_app
+zip -r -y -X MyoOptix-vX.X.X-mac.zip dist/MyoOptix.app
 ```
-上傳 `MyoOptix-mac.zip` 到 GitHub release `vX.X.X`。
+- `-y` 保留符號連結（不加會把 Qt framework 複製好幾份，zip 變 ~1 GB）
+- `-X` 不帶 Mac 附加屬性（避免 `._` 檔）
+- zip 內路徑為 `dist/MyoOptix.app`（沿用 v0.5.0 的結構）
+
+上傳 `MyoOptix-vX.X.X-mac.zip` 到 GitHub release `vX.X.X`，
+並用 `gh api repos/H-S-LAI/Myooptix/releases/tags/vX.X.X --jq '.assets[] | .name + " " + .digest'`
+核對 SHA-256 與本機一致。
+
+**Mac 使用者第一次開啟會被 Gatekeeper 擋下**（app 未經 Apple 公證）。`docs/lab.html` 的 Mac 下載按鈕會先顯示開啟步驟。
 
 ---
 

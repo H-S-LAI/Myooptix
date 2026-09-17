@@ -315,3 +315,29 @@ pyinstaller myooptix_collab_win.spec --noconfirm
   完成後把 `RELEASE_STATUS.md` 的 ⏳ 改為 ✅
 - `20260712_myooptix_collab_server/` 是 Offline 舊專案且已與 `collab_server/` 分岔
   （各有對方沒有的檔案）。**兩端都不要改那個資料夾**，待使用者決定封存或刪除
+
+---
+
+## 2026-09-17 Mac — v0.5.0 Mac 版重新打包上傳、網站 Mac 下載說明
+
+- **v0.5.0 Mac zip 已上傳**（`MyoOptix-v0.5.0-mac.zip`，366 MB）
+  - 7/28 的原 Mac zip 在 macOS 26.2 一啟動就崩潰（QtCore 載入時 SIGSEGV），而且 spec 為 `icon=None`、
+    版本號寫死 `0.4.1`，所以沒上傳過
+  - 從 `v0.5.0` tag 重新打包（只修 spec 的 icon 與版本號）；app 內 `cardio_py` 逐檔與 tag 一致；
+    手動開啟跑 Quick Analysis，結果與 v0.5.0 原始碼重算完全相同；上傳後 GitHub SHA-256 與本機一致
+  - 舊的崩潰 zip 仍在本機 `myooptix_app/MyoOptix-v0.5.0-mac.zip`（未進版控），**不要上傳**
+- `myooptix_mac.spec`：icon 改為 `assets/MyoOptix.icns`；`CFBundleShortVersionString` 改為自動讀 `version.py`
+  （已用新 spec 實際打包確認）
+- `PACKAGING.md`：Mac 壓縮改用 `zip -r -y -X`（原指令沒保留符號連結，zip 變 ~1 GB）；補上 Mac 打包後測試清單
+- `docs/lab.html`：點「Download for Mac」先顯示首次開啟說明視窗（macOS 可能擋下未公證的 app →
+  系統設定 → 隱私權與安全性 → 強制打開）；Mac 大小改為 ~370 MB；兩平台 zip 皆內建模型，移除「首次啟動下載模型」
+- `CLAUDE.md`：網站實際由 Vercel 提供（原寫 GitHub Pages）
+- 已知問題：v0.5.0 關閉 app 時可能閃退（`sys.exit` 後清除 QApplication 時 SIGSEGV，結果已存檔不受影響）；
+  推測與 Quick Analysis 後遞迴呼叫 `main()` 有關，尚未修。Windows 端請留意是否也會發生
+
+### 尚未 push（僅在 Mac 本機分支 `fix/tracking-per-roi-detection`）
+- 追蹤點偵測修正（`7bdedff`）、Mac 大寫 `.MOV` 掃描修正（`a64e009`）——Contractility 數值會改變，預計隨 v0.5.1 發布
+
+### Windows 端注意
+- 本次 push 帶入 8/3 的 `.gitattributes`：**pull 前先 commit 或 stash**；pull 後若大量檔案顯示 modified，
+  執行 `git add --renormalize .`

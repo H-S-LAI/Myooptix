@@ -160,8 +160,8 @@ Status transitions written to `.json` sidecar only — never re-pickle BeatMetri
 | `version.py` | 版本號 `VERSION = "x.y.z"` |
 | `RELEASE_STATUS.md` | 各平台打包狀態 ⏳ → ✅ |
 | `DEVLOG.md` | 本次改動摘要（格式：`## [date] [platform] — summary` + bullet points）|
-| `docs/index.html` | 版本 badge、Mac/Windows 下載連結更新至新版本號 |
-| `myooptix_app/myooptix_mac.spec` | `CFBundleShortVersionString` 更新 |
+| `docs/index.html`、`docs/lab.html` | 版本 badge、Mac/Windows 下載連結、檔案大小更新至新版本（主版在 `lab.html`） |
+| `myooptix_app/myooptix_mac.spec` | 不需手動改：版本號自動讀 `version.py`（2026-09-17 起） |
 
 ### 版本號規則
 - **patch** (0.x.**z**): bug fix、UI 微調
@@ -179,7 +179,7 @@ Status transitions written to `.json` sidecar only — never re-pickle BeatMetri
 - TCY_10X: 1.175 µm/px（851 px = 1000 µm，校準值）
 
 ### 網站
-- `docs/index.html` push 到 main 後自動 deploy（GitHub Pages）
+- 網站 `myooptix.com` 實際由 **Vercel** 提供（2026-09-17 查證：response header `server: Vercel`），內容與 `docs/` 相同：首頁 = `docs/index.html`（Collab），`/lab.html` = `docs/lab.html`（主版）。GitHub Pages 也設定了 `main:/docs`，但不是實際提供網站的來源；Vercel 綁定的分支未確認，push 後請實際打開網站核對
 - `docs/icon.png` 已加入 `.gitignore` 例外，確保有被 track
 
 ### Binary 資產注意

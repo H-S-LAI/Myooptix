@@ -8,10 +8,15 @@
 # Result: dist/MyoOptix.app
 # best_model.pth is bundled under annotation_tool/ — no download needed at first launch.
 #
+import re
 import sys
 from pathlib import Path
 
 ROOT = Path(SPECPATH).parent  # repo root (one level above myooptix_app/)
+
+# Read the app version from version.py so the bundle's Info.plist always matches
+_ver = re.search(r'^VERSION\s*=\s*"([^"]+)"', (ROOT / "version.py").read_text(), re.M)
+APP_VERSION = _ver.group(1) if _ver else "0.0.0"
 
 a = Analysis(
     ["main.py"],
@@ -67,10 +72,10 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name="MyoOptix.app",
-    icon=None,
+    icon=str(ROOT / "myooptix_app" / "assets" / "MyoOptix.icns"),
     bundle_identifier="com.tmu.myooptix",
     info_plist={
-        "CFBundleShortVersionString": "0.4.1",
+        "CFBundleShortVersionString": APP_VERSION,
         "CFBundleName": "MyoOptix",
         "NSHighResolutionCapable": True,
     },
