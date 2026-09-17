@@ -79,6 +79,25 @@
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-secondary { background: var(--surf); color: var(--text); border: 1px solid var(--border); }
     .hint { font-size: .78rem; color: var(--dim); }
+    .mac-dialog {
+      border: 1px solid var(--border); border-radius: 14px; padding: 0;
+      max-width: 460px; width: calc(100% - 32px); margin: auto;
+      background: var(--surf); color: var(--text);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .mac-dialog::backdrop { background: rgba(20,20,30,.45); }
+    .mac-dialog .md-body { padding: 24px 26px 8px; }
+    .mac-dialog h3 { font-size: 1.05rem; margin-bottom: 10px; }
+    .mac-dialog p { font-size: .88rem; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .mac-dialog ol { font-size: .88rem; line-height: 1.7; padding-left: 20px; margin-bottom: 8px; }
+    .mac-dialog .md-actions {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 14px 26px 22px;
+    }
+    .mac-dialog .md-actions button {
+      font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer;
+      padding: 10px 18px; border-radius: 8px; white-space: nowrap;
+    }
 
     .features {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
@@ -304,7 +323,6 @@
     </a>
   </div>
   <p class="hint">Windows 10/11 &amp; macOS &nbsp;&#183;&nbsp; 64-bit &nbsp;&#183;&nbsp; Win ~400 MB / Mac ~370 MB &nbsp;&#183;&nbsp; No Python required</p>
-  <p class="hint">macOS: if the app is blocked on first launch, see <a href="#start">Quick Start step 2</a> &nbsp;&#183;&nbsp; Mac 首次開啟若被擋下，請看下方「快速開始」第 2 步</p>
 
   <div class="features">
     <div class="feature"><div class="icon">&#128249;</div><h3>Video Analysis</h3><p>KLT optical flow tracking across all frames</p></div>
@@ -423,9 +441,8 @@
       <div><h4>啟動應用程式</h4>
         <p>Windows：點兩下 <code>MyoOptix.exe</code> &nbsp;&#183;&nbsp; Mac：開啟 <code>MyoOptix.app</code><br>
         U-Net 模型權重已內建，不需另外下載。</p>
-        <p style="margin-top:10px"><strong>Mac 第一次開啟被擋下時</strong>（出現「無法打開 MyoOptix.app／Apple 無法驗證」）：<br>
-        MyoOptix 尚未經過 Apple 公證，macOS 會阻擋從網路下載的 app，這不代表檔案有問題。<br>
-        1. 在警告視窗按 <strong>完成（Done）</strong>，請勿按「丟到垃圾桶」<br>
+        <p style="margin-top:10px"><strong>Mac 第一次開啟時</strong>，可能會出現「無法打開 MyoOptix.app」，請照以下步驟開啟：<br>
+        1. 在提示視窗按 <strong>完成（Done）</strong>（勿丟到垃圾桶）<br>
         2. 打開 <strong>系統設定（System Settings）</strong> → <strong>隱私權與安全性（Privacy &amp; Security）</strong>，往下捲到「安全性」<br>
         3. 在「已阻擋 MyoOptix.app」旁按 <strong>強制打開（Open Anyway）</strong>，輸入密碼<br>
         4. 再開一次 <code>MyoOptix.app</code>，之後就不會再出現（每台電腦只需設定一次）</p>
@@ -530,6 +547,24 @@
   </span>
 </footer>
 
+<!-- ── Mac 下載提醒視窗 ── -->
+<dialog id="mac-dialog" class="mac-dialog" aria-labelledby="mac-dialog-title">
+  <div class="md-body">
+    <h3 id="mac-dialog-title">Mac 第一次開啟</h3>
+    <p>第一次開啟時，macOS 可能會顯示「無法打開 MyoOptix.app」。如果出現，請照以下步驟開啟：</p>
+    <ol>
+      <li>在提示視窗按 <strong>完成（Done）</strong>（勿丟到垃圾桶）</li>
+      <li>打開 <strong>系統設定（System Settings）</strong> → <strong>隱私權與安全性（Privacy &amp; Security）</strong>，往下捲到「安全性」</li>
+      <li>在「已阻擋 MyoOptix.app」旁按 <strong>強制打開（Open Anyway）</strong>，輸入密碼</li>
+      <li>再開一次 <code>MyoOptix.app</code>，之後就不會再出現</li>
+    </ol>
+  </div>
+  <div class="md-actions">
+    <button type="button" id="mac-dialog-cancel" class="btn-secondary">取消</button>
+    <button type="button" id="mac-dialog-ok" class="btn-primary">我知道了，開始下載</button>
+  </div>
+</dialog>
+
 <script>
 // ── Bug report form ───────────────────────────────────────────────────────
 const REPORT_API = "https://pleasant-miracle-production-95c3.up.railway.app";
@@ -604,6 +639,17 @@ document.getElementById("bug-form").addEventListener("submit", async function(e)
     btnWin.className = 'btn btn-secondary';
   }
   // Windows is already primary by default
+
+  // Mac: show first-launch instructions before downloading
+  const dlg = document.getElementById('mac-dialog');
+  if (dlg && typeof dlg.showModal === 'function') {
+    btnMac.addEventListener('click', e => { e.preventDefault(); dlg.showModal(); });
+    document.getElementById('mac-dialog-ok').addEventListener('click', () => {
+      dlg.close(); window.location.href = btnMac.href;
+    });
+    document.getElementById('mac-dialog-cancel').addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+  }
 })();
 
 // ── step nav ──────────────────────────────────────────────────────────────
