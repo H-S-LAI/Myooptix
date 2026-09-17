@@ -42,26 +42,30 @@ def scan_video_folder(root: str, extensions: tuple = ('.mov', '.mp4', '.avi')) -
     """
     videos = []
     root = Path(root)
-    for ext in extensions:
-        for p in sorted(root.rglob(f'*{ext}')):
-            if p.name.startswith('._'):
-                continue
-            parts = p.relative_to(root).parts
-            if len(parts) >= 3:
-                exp_name = parts[0]
-                day      = parts[1]
-            elif len(parts) == 2:
-                exp_name = parts[0]
-                day      = '—'
-            else:
-                exp_name = '—'
-                day      = '—'
-            videos.append({
-                'path':     str(p),
-                'filename': p.name,
-                'exp_name': exp_name,
-                'day':      day,
-            })
+    # Compare suffixes case-insensitively: rglob('*.mov') is case-sensitive on
+    # macOS and would skip files such as 1.MOV.
+    exts = {e.lower() for e in extensions}
+    for p in sorted(root.rglob('*')):
+        if p.suffix.lower() not in exts or not p.is_file():
+            continue
+        if p.name.startswith('._'):
+            continue
+        parts = p.relative_to(root).parts
+        if len(parts) >= 3:
+            exp_name = parts[0]
+            day      = parts[1]
+        elif len(parts) == 2:
+            exp_name = parts[0]
+            day      = '—'
+        else:
+            exp_name = '—'
+            day      = '—'
+        videos.append({
+            'path':     str(p),
+            'filename': p.name,
+            'exp_name': exp_name,
+            'day':      day,
+        })
     return videos
 
 

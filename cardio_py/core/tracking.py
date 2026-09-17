@@ -23,7 +23,7 @@ _LK_PARAMS = dict(
 )
 
 _FEATURE_PARAMS = dict(
-    maxCorners=500,
+    maxCorners=0,        # 0 = no limit (OpenCV: maxCorners <= 0 means no maximum)
     qualityLevel=0.01,
     minDistance=5,
     blockSize=3,
@@ -94,26 +94,23 @@ def track_video(
     for i, d in enumerate(dilated):
         label_map[d] = i + 1   # 1-indexed, 0 = background
 
-    # Detect features on masked first frame
-    masked0 = gray0.copy()
-    masked0[label_map == 0] = 0
-    pts0 = cv2.goodFeaturesToTrack(masked0, **_FEATURE_PARAMS)
+    # Detect features inside each ROI on the unmodified first frame.
+    # Passing the ROI as `mask` avoids the artificial corners that blacking out
+    # the background creates along the ROI border.
+    pts_list, id_list = [], []
+    for i in range(n_rois):
+        roi_mask = (label_map == i + 1).astype(np.uint8) * 255
+        p = cv2.goodFeaturesToTrack(gray0, mask=roi_mask, **_FEATURE_PARAMS)
+        if p is not None:
+            pts_list.append(p.reshape(-1, 2))
+            id_list.append(np.full(len(pts_list[-1]), i + 1))
 
-    if pts0 is None:
+    if not pts_list:
         cap.release()
         return [TrackingResult(frame_rate=frame_rate) for _ in range(n_rois)]
 
-    pts0 = pts0.reshape(-1, 2)
-
-    # Assign each feature to a ROI
-    pt_ids = np.array([
-        label_map[min(int(round(y)), gray0.shape[0] - 1),
-                  min(int(round(x)), gray0.shape[1] - 1)]
-        for x, y in pts0
-    ])
-    valid = pt_ids > 0
-    pts0 = pts0[valid]
-    pt_ids = pt_ids[valid]
+    pts0 = np.vstack(pts_list)
+    pt_ids = np.concatenate(id_list)
 
     n_features = len(pts0)
 

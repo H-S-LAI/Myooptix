@@ -318,6 +318,29 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 
 ---
 
+## 2026-09-14 Mac — 修正追蹤點偵測方式（影響收縮強度）
+
+- `cardio_py/core/tracking.py`：找點改成每顆 ROI 用 `goodFeaturesToTrack(..., mask=該顆範圍)` 在**原始畫面**上各自找，
+  `maxCorners` 500 → 0（不限數量）
+  - 舊做法：把 ROI 以外塗黑、整張圖找點只取最強的 500 點。塗黑邊界會形成最強的假角點，
+    點幾乎全落在 ROI 外框（類器官本體外）；視野擁擠時每顆只分到個位數的點
+- 影響
+  - BPM、IBI、Interbeat segment 等時間類特徵幾乎不變
+  - **Contractility 會變**（擁擠視野修改前後 0.66～2.59 倍，不是固定倍率）
+  - **v0.5.0 以前算的 Contractility 不能與此版直接比較**；已用 v0.5.0 分析、要比收縮強度的資料需重跑
+  - 每支影片計算時間約為原本的 1.2～2.2 倍
+- 輸入輸出格式不變。重新分析請開新專案（在同一專案重新 compute，報表仍會用舊的 Excel）
+- 驗證：5 支 Ctrl 測試影片修改前後對照；0116 HD/LD 以此版實跑並 review。紀錄在 workspace 的 `20260909_appbugfix/`（不在 repo 內）
+- 版本號尚未更新，發版時再處理
+- 已知且與本次無關：`cardio_py/tests/validate_tracking.py` 找不到 mat 檔無法執行；`validate_mdp.py` 修改前即有 4 項 FAIL
+
+## 2026-09-14 Mac — 修正 Mac 上掃不到大寫副檔名影片
+
+- `cardio_py/core/io.py` `scan_video_folder`：原本用 `rglob('*.mov')`，在 macOS 上區分大小寫，`1.MOV` 會被略過
+  （Windows 不區分大小寫，不受影響）。改為列出所有檔案後以小寫副檔名比對
+- 影響實例：`20250815` 批 94 支 `.MOV` 全部掃不到；`LAI0116/2026_01_16` 27 支只掃到 22 支
+- 驗證：20250815 掃到 94、0116 掃到 27、Ctrl 測試資料夾 8，無重複
+- 修正後需重新開啟 app 才會生效
 ## 2026-09-17 Mac — v0.5.0 Mac 版重新打包上傳、網站 Mac 下載說明
 
 - **v0.5.0 Mac zip 已上傳**（`MyoOptix-v0.5.0-mac.zip`，366 MB）
@@ -335,8 +358,8 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 - 已知問題：v0.5.0 關閉 app 時可能閃退（`sys.exit` 後清除 QApplication 時 SIGSEGV，結果已存檔不受影響）；
   推測與 Quick Analysis 後遞迴呼叫 `main()` 有關，尚未修。Windows 端請留意是否也會發生
 
-### 尚未 push（僅在 Mac 本機分支 `fix/tracking-per-roi-detection`）
-- 追蹤點偵測修正（`7bdedff`）、Mac 大寫 `.MOV` 掃描修正（`a64e009`）——Contractility 數值會改變，預計隨 v0.5.1 發布
+### 追蹤點與 `.MOV` 修正（見上方 2026-09-14 兩則）
+- `7bdedff`、`a64e009` 已於 2026-09-17 合併進 Mac 本機 `main`；Contractility 數值會改變，預計隨 v0.5.1 發布
 
 ### Windows 端注意
 - 本次 push 帶入 8/3 的 `.gitattributes`：**pull 前先 commit 或 stash**；pull 後若大量檔案顯示 modified，
