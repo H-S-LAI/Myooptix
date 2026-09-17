@@ -348,7 +348,7 @@ pyinstaller myooptix_collab_win.spec --noconfirm
     版本號寫死 `0.4.1`，所以沒上傳過
   - 從 `v0.5.0` tag 重新打包（只修 spec 的 icon 與版本號）；app 內 `cardio_py` 逐檔與 tag 一致；
     手動開啟跑 Quick Analysis，結果與 v0.5.0 原始碼重算完全相同；上傳後 GitHub SHA-256 與本機一致
-  - 舊的崩潰 zip 仍在本機 `myooptix_app/MyoOptix-v0.5.0-mac.zip`（未進版控），**不要上傳**
+  - 舊的崩潰 zip（原在 `myooptix_app/MyoOptix-v0.5.0-mac.zip`，未進版控）已移到垃圾桶
 - `myooptix_mac.spec`：icon 改為 `assets/MyoOptix.icns`；`CFBundleShortVersionString` 改為自動讀 `version.py`
   （已用新 spec 實際打包確認）
 - `PACKAGING.md`：Mac 壓縮改用 `zip -r -y -X`（原指令沒保留符號連結，zip 變 ~1 GB）；補上 Mac 打包後測試清單
@@ -364,3 +364,13 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 ### Windows 端注意
 - 本次 push 帶入 8/3 的 `.gitattributes`：**pull 前先 commit 或 stash**；pull 後若大量檔案顯示 modified，
   執行 `git add --renormalize .`
+
+### v0.5.1 發版清單（預計 2026-09-18，發版前先問使用者）
+內容：追蹤點偵測修正（`7bdedff`）＋ Mac `.MOV` 掃描修正（`a64e009`）；可考慮一起修 BUG-07（關閉時閃退）
+1. [ ] `version.py` → `0.5.1`（Mac spec 會自動讀；Windows spec 是否需改待確認）
+2. [ ] `docs/lab.html`：版本 badge、兩個下載連結改 v0.5.1、檔案大小
+3. [ ] DEVLOG、`RELEASE_STATUS.md` 更新；commit → `git push origin main` → `git tag v0.5.1` → `git push origin v0.5.1`
+4. [ ] Mac：依 `PACKAGING.md` 打包 → **手動雙擊測試**（Quick Analysis 跑完、關閉後查當機報告）→ `zip -r -y -X` → 上傳並核對 SHA-256
+5. [ ] **Windows**：pull（先 commit/stash；必要時 `git add --renormalize .`）→ 打包 → 測試 → 上傳 `MyoOptix-v0.5.1-win.zip`
+6. [ ] `gh release create v0.5.1`，發版說明必須寫：**Contractility 算法改變，數值不能與 v0.5.0 以前直接比較**；BPM 等時間類指標大致不變
+7. [ ] 兩個 zip 都上傳後才推 `lab.html` 的連結（避免網站連到不存在的檔案）；推完打開 myooptix.com/lab.html 確認
