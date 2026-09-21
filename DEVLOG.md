@@ -374,3 +374,18 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 5. [ ] **Windows**：pull（先 commit/stash；必要時 `git add --renormalize .`）→ 打包 → 測試 → 上傳 `MyoOptix-v0.5.1-win.zip`
 6. [ ] `gh release create v0.5.1`，發版說明必須寫：**Contractility 算法改變，數值不能與 v0.5.0 以前直接比較**；BPM 等時間類指標大致不變
 7. [ ] 兩個 zip 都上傳後才推 `lab.html` 的連結（避免網站連到不存在的檔案）；推完打開 myooptix.com/lab.html 確認
+
+---
+
+## 2026-09-21 Mac — Collab 後台（Railway）恢復
+
+- 狀況：`pleasant-miracle-production-95c3.up.railway.app` 回「Application not found」，Collab 版無法登入／註冊。
+  Railway 上 Postgres 仍 Online（資料在），`pleasant-miracle` 服務顯示 offline；使用者重新登入並訂閱 Railway
+- 在 Railway 按 Redeploy 失敗：重新部署的是 7 月初的舊快照（`asyncpg==0.29.0`），Railway 新打包工具 Railpack
+  預設 Python 3.13，asyncpg 0.29 無法編譯
+- 修復：從 `collab_server/` 以 `railway up` 部署最新程式（`asyncpg==0.30.0`、`.python-version` 3.12、Brevo 寄信）。
+  部署前確認 6 個必要環境變數在 Railway 上都有；`DATABASE_URL` 指向 `postgres.railway.internal`
+- 新增 `collab_server/.railwayignore`：排除 `app/`（94 MB 桌面版）、`tests/`、`supabase/`
+- 驗證：`/` 200、`/web/admin.html` 200、`/auth/verify` 假 token 回 401、log「DB schema ready」
+- 備註：Supabase 專案 `qrgrnqxbsogslqxeeskv` 為 INACTIVE，**正式環境未使用**
+- 以後部署：`cd collab_server && railway up --ci -s pleasant-miracle -e production`（CLI 需已登入並 link 專案）

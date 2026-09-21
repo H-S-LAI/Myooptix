@@ -1,0 +1,7 @@
+# 只上傳伺服器需要的檔案（main.py、requirements.txt、Procfile、.python-version、static/）
+app/
+tests/
+supabase/
+__pycache__/
+*.pyc
+.env
