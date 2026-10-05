@@ -4,6 +4,7 @@ All methods are synchronous (called from Qt main thread or worker thread).
 """
 
 import json
+import ssl
 import urllib.request
 import urllib.error
 from typing import Optional
@@ -11,6 +12,37 @@ from typing import Optional
 API_BASE          = "https://pleasant-miracle-production-95c3.up.railway.app"
 TIMEOUT           = 10   # seconds (default)
 TIMEOUT_REGISTER  = 30   # seconds (email sending can be slow)
+
+
+_system_ctx = ssl.create_default_context()   # uses the OS trust store
+_bundled_ctx = None                          # built on demand from certifi
+
+
+def _bundled_context() -> ssl.SSLContext:
+    """CA bundle shipped with the app, used only as a fallback."""
+    global _bundled_ctx
+    if _bundled_ctx is None:
+        import certifi
+        _bundled_ctx = ssl.create_default_context(cafile=certifi.where())
+    return _bundled_ctx
+
+
+def _urlopen(req, timeout):
+    """Open `req`, retrying with the bundled CA bundle on a verification error.
+
+    The OS trust store is tried first so that networks with a TLS-inspecting
+    proxy keep working. Windows machines that never received the self-signed
+    ISRG Root X2 validate our chain through the X1 cross-sign instead, which
+    expired 2025-09-16; certifi carries the self-signed root, so the retry
+    succeeds there. Only verification errors are retried — the request never
+    reached the server, so re-sending it is safe.
+    """
+    try:
+        return urllib.request.urlopen(req, timeout=timeout, context=_system_ctx)
+    except urllib.error.URLError as e:
+        if not isinstance(getattr(e, "reason", None), ssl.SSLCertVerificationError):
+            raise
+        return urllib.request.urlopen(req, timeout=timeout, context=_bundled_context())
 
 
 class APIError(Exception):
@@ -29,7 +61,7 @@ def _request(method: str, path: str, body: Optional[dict] = None,
 
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _urlopen(req, timeout) as resp:
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
         try:

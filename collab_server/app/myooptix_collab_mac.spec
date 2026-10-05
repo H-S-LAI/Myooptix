@@ -21,9 +21,11 @@ a = Analysis(
         (str(ROOT / "ui"),        "ui"),
         (str(ROOT / "api_client.py"),  "."),
         (str(ROOT / "token_store.py"), "."),
+        (str(ROOT / "collab_version.py"), "."),
         (str(REPO_ROOT / "annotation_tool" / "best_model.pth"), "annotation_tool"),
     ],
     hiddenimports=[
+        "certifi",            # bundled CA fallback in api_client.py
         "segmentation_models_pytorch",
         "timm",
         "timm.models",
@@ -67,7 +69,7 @@ app = BUNDLE(
     icon=str(ROOT / "assets" / "icon.png"),
     bundle_identifier="com.tmu.myooptix.collab",
     info_plist={
-        "CFBundleShortVersionString": "1.1.0",
+        "CFBundleShortVersionString": "1.1.1",   # 發版時手動更新，與 collab_version.py 一致
         "CFBundleName": "MyoOptix",
         "NSHighResolutionCapable": True,
     },

@@ -22,10 +22,12 @@ a = Analysis(
         (str(APP_DIR   / "ui"),           "ui"),
         (str(APP_DIR   / "api_client.py"), "."),
         (str(APP_DIR   / "token_store.py"), "."),
+        (str(APP_DIR   / "collab_version.py"), "."),
         (str(REPO_ROOT / "cardio_py"),    "cardio_py"),
         (str(REPO_ROOT / "annotation_tool" / "best_model.pth"), "annotation_tool"),
     ],
     hiddenimports=[
+        "certifi",            # bundled CA fallback in api_client.py
         "segmentation_models_pytorch",
         "timm",
         "timm.models",
