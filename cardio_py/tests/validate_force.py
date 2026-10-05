@@ -42,7 +42,7 @@ ref_first5_locs = np.array([1.0677,  2.3023,  3.5702,  4.8048,  6.0727])
 signal, axis = select_dominant_signal(signal_x, signal_y, time)
 mdp    = calculate_mdp_metrics(signal, time, k_multiplier=1.0, min_peak_distance_sec=0.2)
 
-# Raw KLT magnitude from MATLAB 輸出參考 (not yet baseline-corrected)
+# Raw KLT magnitude from the MATLAB reference output (not yet baseline-corrected)
 # matlab_output_reference stores the already-corrected Global_Trace, so we use it directly
 # for anchor search (same as MATLAB does in the review GUI)
 result = compute_contractility(
