@@ -452,11 +452,17 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 - Mac 已打包測試通過：`collab_server/app/MyoOptix-collab-v1.1.1-mac.zip`（452 MB，尚未上傳）
 
 ### Collab v1.1.1 的內容範圍（注意）
-collab-v1.1.0 是 7/15 發布，之後 Collab 未更新，因此這版會一併帶入：
-- v0.5.0 的改動（檔名衝突、Group、Lock Flip）
+collab-v1.1.0 是 7/15 發布，之後 Collab 未更新。**更正（2026-10-05）**：原本誤寫為會帶入
+v0.5.0 的改動，實際上 v0.5.0 的修改除了 `mdp.py` 之外全在 `myooptix_app/ui/`，而 Collab 有自己
+獨立的一份 UI（`collab_server/app/ui/`），因此這版實際只包含：
 - **追蹤點偵測修正 → Collab 的 Contractility 數值也會改變**（發版說明必寫）
-- `mdp.py` 新增的 `force_flipped` 參數為選填，Collab 未使用，行為不變
+- 憑證驗證備援（本次新增）
+- `mdp.py` 新增的 `force_flipped` 參數為選填，Collab UI 未呼叫，行為不變
 - `io.py` 掃描修正不影響 Collab（Collab 只用 `read_first_frame` 與 Excel 匯出）
+
+**Collab 仍缺少的主版功能**（各自獨立的 UI 造成，非本次迴歸）：
+Lock Flip（`dialog_review.py`）、檔名衝突修正（`worker_compute.py`）、Group 修正（`tab_dashboard.py`）。
+Collab 使用者若遇到翻轉判斷錯誤，目前**無法手動鎖定**，只能接受自動判斷結果。
 
 ### Windows 待辦
 1. `git pull`（pull 前先 commit 或 stash）
