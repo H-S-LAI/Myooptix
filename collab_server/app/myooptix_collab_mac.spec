@@ -69,7 +69,7 @@ app = BUNDLE(
     icon=str(ROOT / "assets" / "icon.png"),
     bundle_identifier="com.tmu.myooptix.collab",
     info_plist={
-        "CFBundleShortVersionString": "1.1.1",   # 發版時手動更新，與 collab_version.py 一致
+        "CFBundleShortVersionString": "1.1.2",   # 發版時手動更新，與 collab_version.py 一致
         "CFBundleName": "MyoOptix",
         "NSHighResolutionCapable": True,
     },

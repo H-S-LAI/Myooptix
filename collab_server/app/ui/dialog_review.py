@@ -437,6 +437,11 @@ class ReviewDialog(QDialog):
         metrics_box = QGroupBox("Beat Metrics")
         mb = QVBoxLayout(metrics_box)
         mb.setSpacing(4)
+        from .help_dialog import help_button
+        help_row = QHBoxLayout()
+        help_row.addStretch()
+        help_row.addWidget(help_button(self, "review"))
+        mb.addLayout(help_row)
         for key, label in [("HR",       "HR (BPM)"),
                             ("ST",       "ST (ms)"),
                             ("DT",       "DT (ms)"),
@@ -761,8 +766,11 @@ class ReviewDialog(QDialog):
     def _on_export_done(self, n):
         self._exported = True
         self._export_toast.deleteLater()
-        _Toast(f"Saved {n} ROI(s) — Excel + summary images", self, kind="success")
-        QTimer.singleShot(2400, self.accept)
+        from .dialog_export_done import ExportDoneDialog
+        out_root = Path(self._pkl_path).parent.parent
+        stem = Path(self._pkl_path).stem
+        ExportDoneDialog(n, out_root, stem, self).exec()
+        self.accept()
 
     def _on_export_error(self, msg):
         self._export_toast.deleteLater()

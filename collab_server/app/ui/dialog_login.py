@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from api_client import login, APIError
 from collab_version import COLLAB_VERSION
+from .help_dialog import help_button
 
 
 class _LoginWorker(QThread):
@@ -155,11 +156,16 @@ class LoginDialog(QDialog):
         root.addLayout(reg_row)
 
         # ── version ───────────────────────────────────────────────────────────
+        ver_row = QHBoxLayout()
+        ver_row.addStretch()
         ver = QLabel(f"Collab Edition v{COLLAB_VERSION}")
-        ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ver.setStyleSheet("font-size: 11px; color: #b5ad9e;")
+        ver_row.addWidget(ver)
+        ver_row.addSpacing(8)
+        ver_row.addWidget(help_button(self, "login"))
+        ver_row.addStretch()
         root.addSpacing(10)
-        root.addWidget(ver)
+        root.addLayout(ver_row)
 
     def _divider(self):
         line = QFrame()

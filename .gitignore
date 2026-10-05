@@ -48,3 +48,10 @@ all6roi_perdist.png
 contractility_sensitivity.png
 feature_points_distribution.png
 synthetic_validation.png
+
+# 打包產物（上傳到 GitHub Release，不進版控）
+*.zip
+myooptix_app/dist/
+myooptix_app/build/
+collab_server/app/dist/
+collab_server/app/build/

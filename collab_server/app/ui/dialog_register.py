@@ -3,6 +3,7 @@ Registration dialog — user applies for access.
 """
 
 from PyQt6.QtWidgets import (
+    QHBoxLayout,
     QDialog, QVBoxLayout, QLabel, QPushButton,
     QLineEdit, QFrame,
 )
@@ -45,9 +46,14 @@ class RegisterDialog(QDialog):
         root.setContentsMargins(32, 28, 32, 24)
         root.setSpacing(0)
 
+        from .help_dialog import help_button
+        t_row = QHBoxLayout()
         title = QLabel("Request Access")
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: #3b3a32;")
-        root.addWidget(title)
+        t_row.addWidget(title)
+        t_row.addStretch()
+        t_row.addWidget(help_button(self, "register"))
+        root.addLayout(t_row)
         sub = QLabel("Fill in your details. You will receive an email when approved.")
         sub.setStyleSheet("font-size: 11px; color: #8a8070;")
         sub.setWordWrap(True)

@@ -241,6 +241,9 @@ class QuickAnalysisDialog(QDialog):
         title = QLabel("Quick Analysis")
         title.setStyleSheet("font-size: 15px; font-weight: bold; color: #3b3a32;")
         hdr.addWidget(title)
+        hdr.addSpacing(6)
+        from .help_dialog import help_button
+        hdr.addWidget(help_button(self, "quick"))
         hdr.addStretch()
         name = self._user_info.get("full_name", "")
         inst = self._user_info.get("institution", "")
