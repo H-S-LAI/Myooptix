@@ -431,3 +431,45 @@ pyinstaller myooptix_collab_win.spec --noconfirm
   修正方向：`collab_server/app/api_client.py` 先用系統憑證、失敗時改用 certifi。**本次尚未實作**
 - `.pkl` 沒有記錄產生它的 app 版本，無法分辨結果是哪一版算的。建議之後加 `app_version` 欄位
 - BUG-07：關閉 app 時可能閃退（結果已存檔，不影響數據）
+
+## 2026-10-05 Mac — Collab v1.1.1 Mac 版已打包（Windows 待做）
+
+### 問題
+外部使用者（清大）在 Windows 上登入 Collab 版出現
+`[SSL: CERTIFICATE_VERIFY_FAILED] certificate has expired`。
+診斷（PowerShell 檢查憑證鏈）結果：伺服器憑證正常（10/27 到期），簽發者確實是 Let's Encrypt，
+但她的 Windows 信任清單缺少**自簽版 ISRG Root X2**，驗證時改走 **X1 交叉簽署版**，
+那張已於 **2025-09-16 到期** → 驗證失敗。與防毒軟體無關（她已移除 Kaspersky，仍相同錯誤）。
+
+### 修正
+- `collab_server/app/api_client.py`：兩段式驗證。先用系統憑證（保有 TLS 攔截環境的相容性），
+  **僅在 `SSLCertVerificationError` 時**改用 certifi 重試一次（憑證驗證失敗代表請求未送達，重送安全）
+- 已實測：正常連線 OK；以無關 CA 模擬系統憑證失敗 → 自動改用 certifi 成功；
+  帳密錯誤仍回 401；連不到主機訊息不變
+- 新增 `collab_version.py`（`COLLAB_VERSION = "1.1.1"`），登入畫面底部顯示版本
+- **Collab 版不做自動更新**：有新版以信件通知使用者重新下載
+- 兩個 spec 加入 `certifi`、`collab_version.py`；Mac spec 版本字串手動維護
+- Mac 已打包測試通過：`collab_server/app/MyoOptix-collab-v1.1.1-mac.zip`（452 MB，尚未上傳）
+
+### Collab v1.1.1 的內容範圍（注意）
+collab-v1.1.0 是 7/15 發布，之後 Collab 未更新，因此這版會一併帶入：
+- v0.5.0 的改動（檔名衝突、Group、Lock Flip）
+- **追蹤點偵測修正 → Collab 的 Contractility 數值也會改變**（發版說明必寫）
+- `mdp.py` 新增的 `force_flipped` 參數為選填，Collab 未使用，行為不變
+- `io.py` 掃描修正不影響 Collab（Collab 只用 `read_first_frame` 與 Excel 匯出）
+
+### Windows 待辦
+1. `git pull`（pull 前先 commit 或 stash）
+2. 打包：
+   ```
+   cd collab_server\app
+   ..\..\..\.venv_win\Scripts\activate
+   pyinstaller myooptix_collab_win.spec --noconfirm
+   ```
+3. 乾淨測試：複製 `dist\MyoOptix\` 到桌面獨立資料夾 → 執行
+   - [ ] 登入畫面底部顯示 `Collab Edition v1.1.1`
+   - [ ] 能登入、Quick Analysis 跑完一支影片
+   - [ ] `_internal\certifi\cacert.pem` 存在（備援憑證清單）
+4. 壓縮上傳到 release `collab-v1.1.1`（**維持 Pre-release，不可設為 Latest**，否則主版的更新檢查會誤判）
+5. 兩平台都上傳後才更新 `docs/index.html` 的 Collab 下載連結與版本
+6. 寄信通知現有使用者（目前 4 個帳號）重新下載
