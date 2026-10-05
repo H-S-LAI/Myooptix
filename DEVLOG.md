@@ -479,3 +479,10 @@ Collab 使用者若遇到翻轉判斷錯誤，目前**無法手動鎖定**，只
 4. 壓縮上傳到 release `collab-v1.1.1`（**維持 Pre-release，不可設為 Latest**，否則主版的更新檢查會誤判）
 5. 兩平台都上傳後才更新 `docs/index.html` 的 Collab 下載連結與版本
 6. 寄信通知現有使用者（目前 4 個帳號）重新下載
+
+### 2026-10-05 發布完成
+- **v0.5.1**（Latest）與 **collab-v1.1.1**（Pre-release）皆已發布，四個 zip 下載正常
+- 網站已更新：`lab.html` → v0.5.1、`index.html` → collab-v1.1.1（Vercel 幾秒內生效）
+- Windows 端打包由 Windows 的 Claude session 透過 Remote Control 協作完成；上傳由使用者本人在該 session 授權
+- 待辦：通知現有 Collab 使用者重新下載；Windows stash@{0}（主版 updater 的 certifi 修正）尚未處理
+- 下一版 Collab v1.1.2 規劃：匯出完成視窗（取代易錯過的 toast，顯示輸出路徑與開啟資料夾按鈕）、各畫面「?」說明（中英並陳）
