@@ -486,3 +486,38 @@ Collab 使用者若遇到翻轉判斷錯誤，目前**無法手動鎖定**，只
 - Windows 端打包由 Windows 的 Claude session 透過 Remote Control 協作完成；上傳由使用者本人在該 session 授權
 - 待辦：通知現有 Collab 使用者重新下載；Windows stash@{0}（主版 updater 的 certifi 修正）尚未處理
 - 下一版 Collab v1.1.2 規劃：匯出完成視窗（取代易錯過的 toast，顯示輸出路徑與開啟資料夾按鈕）、各畫面「?」說明（中英並陳）
+
+---
+
+## 2026-10-05 Mac — Collab v1.1.2（說明系統、匯出完成視窗、cv2 載入修正）
+
+### 新增
+- 各畫面「?」說明按鈕，中英並陳（`ui/help_texts.py`、`ui/help_dialog.py`）
+  - Quick Analysis：scale 的量測方法；沿用預設值時 Contractility／Diameter／Area 會等比例失真，
+    BPM、IBI、HRV、ST、DT、Interbeat 不受影響；同一批必須用同一個 scale
+  - Review：CS/CE/RE 定義、9 個輸出變量逐項解釋、K 與 Min distance 的作用
+- 匯出完成視窗（`ui/dialog_export_done.py`）取代 2.4 秒消失的 toast，
+  顯示輸出檔名、儲存路徑、「開啟資料夾」按鈕，需按鈕關閉
+
+### 重要修正：打包版 cv2 載入遞迴（Collab 專有）
+打包版執行分析時：`ImportError: recursion is detected during loading of "cv2" binary extensions`。
+
+原因：Collab 在匯入 `cardio_py` 前把 `Path(__file__).parent.parent` 插到 `sys.path` 最前面。
+打包後該路徑 = `Contents/Resources`（Windows 為 `_internal`），**該目錄內含 cv2**，
+於是 cv2 被當成檔案系統套件載入，觸發其 bootstrap 的自我載入而遞迴。
+**主版不受影響**：主版 9 處插入用的都是 `parent.parent.parent`（= `Contents/`，不含 cv2）。
+已實測：打包版 v0.5.1（Mac、Windows）Quick Analysis／Batch Compute 皆正常。
+
+修正：只在非凍結狀態插入路徑（`if not getattr(sys, "frozen", False)`），
+涵蓋 `main.py`、`ui/dialog_login.py`、`ui/dialog_register.py`、`ui/dialog_quick.py`（含 worker）、
+`ui/dialog_review.py`（2 處）。Mac 重新打包後實測可完成分析與匯出。
+
+**教訓**：打包版不要再改 `sys.path`；需要時先確認該路徑在凍結後指向哪裡。
+最小重現測試（單純 import cv2、三執行緒同時 import、插入 Resources 後 import）都不會重現，
+必須在真實 app 內才會出現，因此只能以實機測試驗證。
+
+### 待辦
+- Windows 重新打包 Collab v1.1.2（指令已送出，該機離線中排隊）
+- 兩平台 zip 上傳 → 發布 collab-v1.1.2 → 更新 `docs/index.html` → **再把 collab-v1.1.1 改回草稿撤回**
+  （v1.1.1 含同樣的 cv2 缺陷，不應繼續提供下載）
+- 通知現有 4 位 Collab 使用者重新下載
