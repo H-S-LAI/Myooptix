@@ -142,4 +142,4 @@ Collab 必須維持 Pre-release，否則主版的 `updater.py` 會把 collab 版
 
 User email: b101110099@tmu.edu.tw
 MATLAB source (reference only, do not modify): `202260413_7.6.0_Bugfix/`
-Golden standard data: `golden_standard.mat`, `golden_tracking.mat`
+MATLAB reference output: `matlab_output_reference.mat`, `matlab_tracking_reference.mat`

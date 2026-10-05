@@ -36,13 +36,13 @@ MATLAB source (reference only) lives under `202260413_7.6.0_Bugfix/`.
 │   │   ├── segmentation.py← Otsu + U-Net segmentation
 │   │   ├── io.py          ← Video scan, Excel export
 │   │   └── roi_selector.py← OpenCV interactive ROI drawing
-│   └── tests/             ← Validation scripts against golden_standard.mat
+│   └── tests/             ← Regression scripts: compare against the MATLAB port reference
 ├── annotation_tool/       ← U-Net training tool (done, best_model.pth ready)
 ├── 202260413_7.6.0_Bugfix/← MATLAB source (reference only, do not modify)
 ├── Ctrl/                  ← Test video data (After/Before folders)
 ├── Analysis_20260630/     ← Test project folder for benchmarking
-├── golden_standard.mat    ← Golden data for algorithm validation
-├── golden_tracking.mat
+├── matlab_output_reference.mat    ← MATLAB 移植對照用的輸出紀錄（非正確答案）
+├── matlab_tracking_reference.mat
 ├── _archive/              ← Deprecated code (Streamlit app, old pages)
 └── 啟動 MyoOptix.command  ← Launch script
 ```
@@ -57,7 +57,7 @@ python main.py
 
 ## Validation Scripts
 
-Run against `golden_standard.mat` to verify algorithm correctness after changes:
+Run against `matlab_output_reference.mat` to verify algorithm correctness after changes:
 
 ```bash
 source .venv/bin/activate

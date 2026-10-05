@@ -2,7 +2,7 @@
 KLT Tracking Validation
 ========================
 Runs Python KLT on Ctrl/After/1.mov and compares final metrics
-(HR, IBI, Force) against the MATLAB golden standard.
+(HR, IBI, Force) against the MATLAB reference output (the port's baseline, not ground truth).
 
 Note: KLT implementations differ between OpenCV and MATLAB at the
 pixel level, so we compare final *analysis* results, not raw signals.
@@ -28,17 +28,17 @@ VIDEO_PATH = '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/Ctrl/Af
 MAT_PATH   = '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/Analysis_20260630/_mat_files_for_review/VID_0001_for_review.mat'
 SCALE_UM_PX = 10000 / 1530   # placeholder — replace with real calibration
 
-# ── MATLAB golden standard ────────────────────────────────────
+# ── MATLAB reference output (the port's baseline, not ground truth) ────────────────────────────────────
 mat = scipy.io.loadmat(
-    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/golden_standard.mat',
+    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/matlab_output_reference.mat',
     squeeze_me=True, struct_as_record=False
 )
-g = mat['golden']
+g = mat['golden']   # .mat 內部的變數名稱，內容是 MATLAB 的輸出，不是正確答案
 ref_HR    = int(g.PeakLocs.shape[0])
 ref_IBI   = float(g.IBI_avg)
 ref_force = float(g.Force)
 
-print(f"\nMALTAB golden standard: HR={ref_HR}  IBI={ref_IBI:.4f}s  Force={ref_force:.4f} µm/s")
+print(f"\nMATLAB reference output: HR={ref_HR}  IBI={ref_IBI:.4f}s  Force={ref_force:.4f} µm/s")
 
 # ── Step 1: Load MATLAB masks from .mat (Manual ROI mode) ────
 # VID_0001 was processed in Manual mode (roiPrefix='ROI'), so masks

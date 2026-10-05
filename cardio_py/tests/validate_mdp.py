@@ -21,10 +21,10 @@ from cardio_py.core.mdp import calculate_mdp_metrics, select_dominant_signal
 
 # ── 載入黃金標準 ──────────────────────────────────────────────
 mat = scipy.io.loadmat(
-    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/golden_standard.mat',
+    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/matlab_output_reference.mat',
     squeeze_me=True, struct_as_record=False
 )
-g = mat['golden']
+g = mat['golden']   # .mat 內部的變數名稱，內容是 MATLAB 的輸出，不是正確答案
 
 time       = g.time.astype(float)
 signal_x   = g.signal_X.astype(float)

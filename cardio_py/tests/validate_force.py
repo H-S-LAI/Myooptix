@@ -1,7 +1,7 @@
 """
 Force (Contractility) Validation
 =================================
-Compares Python anchor search results against MATLAB golden standard.
+Compares Python anchor search results against MATLAB reference output (the port's baseline, not ground truth).
 
 Run:
     python cardio_py/tests/validate_force.py
@@ -17,12 +17,12 @@ import matplotlib.gridspec as gridspec
 from cardio_py.core.mdp import calculate_mdp_metrics, select_dominant_signal
 from cardio_py.core.force import compute_contractility
 
-# ── Load golden standard ──────────────────────────────────────
+# ── Load MATLAB reference output ──────────────────────────────────────
 mat = scipy.io.loadmat(
-    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/golden_standard.mat',
+    '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/matlab_output_reference.mat',
     squeeze_me=True, struct_as_record=False
 )
-g = mat['golden']
+g = mat['golden']   # .mat 內部的變數名稱，內容是 MATLAB 的輸出，不是正確答案
 
 time        = g.time.astype(float)
 signal_x    = g.signal_X.astype(float)
@@ -34,7 +34,7 @@ ref_force_vals = g.Global_Peaks_Vals.astype(float)
 ref_force_locs = g.Global_Peaks_Locs.astype(float)
 ref_contractility = float(g.Force)
 
-# MATLAB golden standard first 5 values (from user confirmation)
+# MATLAB reference output (the port's baseline, not ground truth) first 5 values (from user confirmation)
 ref_first5_vals = np.array([77.4720, 72.7265, 70.2241, 71.9629, 74.3517])
 ref_first5_locs = np.array([1.0677,  2.3023,  3.5702,  4.8048,  6.0727])
 
@@ -42,8 +42,8 @@ ref_first5_locs = np.array([1.0677,  2.3023,  3.5702,  4.8048,  6.0727])
 signal, axis = select_dominant_signal(signal_x, signal_y, time)
 mdp    = calculate_mdp_metrics(signal, time, k_multiplier=1.0, min_peak_distance_sec=0.2)
 
-# Raw KLT magnitude from golden standard (not yet baseline-corrected)
-# golden_standard stores the already-corrected Global_Trace, so we use it directly
+# Raw KLT magnitude from MATLAB 輸出參考 (not yet baseline-corrected)
+# matlab_output_reference stores the already-corrected Global_Trace, so we use it directly
 # for anchor search (same as MATLAB does in the review GUI)
 result = compute_contractility(
     klt_magnitude=glob_trace,   # already corrected — skip baseline step

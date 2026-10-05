@@ -1,5 +1,5 @@
 """
-Debug segmentation — compare Python Otsu mask with MATLAB golden standard mask.
+Debug segmentation — compare Python Otsu mask with MATLAB reference output (the port's baseline, not ground truth) mask.
 Run: python cardio_py/tests/debug_segmentation.py
 """
 import sys, os
@@ -14,7 +14,7 @@ from cardio_py.core.segmentation import segment_otsu
 
 VIDEO_PATH = '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/Ctrl/After/1.mov'
 
-# Load golden standard (contains MATLAB's L_all_organoids mask)
+# Load MATLAB reference output (contains MATLAB's L_all_organoids mask)
 mat_review = scipy.io.loadmat(
     '/Users/ottiblai/Desktop/cardioproj/20260630_matlabtopython/Analysis_20260630/_mat_files_for_review/VID_0001_for_review.mat',
     squeeze_me=True, struct_as_record=False
