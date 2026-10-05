@@ -389,3 +389,45 @@ pyinstaller myooptix_collab_win.spec --noconfirm
 - 驗證：`/` 200、`/web/admin.html` 200、`/auth/verify` 假 token 回 401、log「DB schema ready」
 - 備註：Supabase 專案 `qrgrnqxbsogslqxeeskv` 為 INACTIVE，**正式環境未使用**
 - 以後部署：`cd collab_server && railway up --ci -s pleasant-miracle -e production`（CLI 需已登入並 link 專案）
+
+---
+
+## 2026-10-05 Mac — v0.5.1 Mac 版已打包（Windows 待做）
+
+### 已完成（Mac）
+- `version.py` → **0.5.1**
+- 驗證參考檔改名：`golden_standard.mat` → `matlab_output_reference.mat`、
+  `golden_tracking.mat` → `matlab_tracking_reference.mat`（內容只是移植時的 MATLAB 輸出，不是正確答案）
+- 新增 `cardio_py/tests/check_tracking_points.py`：不依賴 MATLAB 的追蹤點自我驗證。
+  實測 `files/ctrl/D4/1.MOV`：總點數 443→3466、落在類器官本體中位數 1%→55%、
+  「拿掉一顆 ROI 影響其他顆」10 顆→0 顆
+- `validate_mdp`、`validate_force` 通過；`validate_tracking` 仍無法執行（BUG-05，缺 .mat 檔）
+- Mac 打包完成並啟動測試通過：`myooptix_app/MyoOptix-v0.5.1-mac.zip`（367 MB，尚未上傳）
+
+### Windows 待辦（下一步）
+1. `git pull`（**pull 前先 commit 或 stash**；pull 後若大量檔案顯示 modified，執行 `git add --renormalize .`）
+2. 確認 `version.py` 是 `0.5.1`
+3. 依 `PACKAGING.md` 打包主版：
+   ```
+   cd myooptix_app
+   ..\..\.venv_win\Scripts\activate
+   pyinstaller myooptix.spec --noconfirm
+   ```
+4. 乾淨測試（必做）：複製 `dist\MyoOptix\` 到桌面獨立資料夾 → 執行 `MyoOptix.exe`
+   - [ ] icon 正確、開得起來
+   - [ ] Batch Compute 選 U-Net 跑一支影片不報錯
+   - [ ] 追蹤點修正有進去：`_internal\cardio_py\core\tracking.py` 應含 `maxCorners=0`
+5. 壓縮並上傳：
+   ```
+   cd myooptix_app\dist
+   powershell Compress-Archive -Path MyoOptix\* -DestinationPath MyoOptix-v0.5.1-win.zip -CompressionLevel Optimal
+   ```
+   上傳到 GitHub release `v0.5.1`
+6. **兩個 zip 都上傳後**，才更新 `docs/lab.html` 的版本標籤與下載連結（否則網站會連到不存在的檔案）
+7. 發版說明必寫：**Contractility 算法改變，數值不可與 v0.5.0 以前直接比較**；BPM 等時間類指標大致不變
+
+### 已知未解
+- Collab 版的憑證問題（使用者的 Windows 缺 ISRG Root X2 自簽版，驗證時走到 2025-09-16 已過期的交叉簽署版）。
+  修正方向：`collab_server/app/api_client.py` 先用系統憑證、失敗時改用 certifi。**本次尚未實作**
+- `.pkl` 沒有記錄產生它的 app 版本，無法分辨結果是哪一版算的。建議之後加 `app_version` 欄位
+- BUG-07：關閉 app 時可能閃退（結果已存檔，不影響數據）
