@@ -13,7 +13,8 @@ from PyQt6.QtGui import QPixmap
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(Path(__file__).parent.parent))
 from api_client import login, APIError
 from collab_version import COLLAB_VERSION
 from .help_dialog import help_button

@@ -15,8 +15,11 @@ from pathlib import Path
 
 APP_DIR  = Path(__file__).parent
 REPO_ROOT = APP_DIR.parent.parent   # myooptix/ repo root — contains cardio_py/
-sys.path.insert(0, str(APP_DIR))
-sys.path.insert(0, str(REPO_ROOT))
+# 從原始碼執行時才需要補路徑；打包後 Contents/Resources 內含 cv2 等套件，
+# 插進 sys.path 會蓋掉凍結的模組，造成 cv2 載入遞迴錯誤
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(APP_DIR))
+    sys.path.insert(0, str(REPO_ROOT))
 
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThread, pyqtSignal

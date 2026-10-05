@@ -11,7 +11,8 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(Path(__file__).parent.parent))
 from api_client import register, APIError
 
 

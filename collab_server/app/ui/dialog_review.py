@@ -214,7 +214,8 @@ class _ExportWorker(QThread):
     def run(self):
         import sys
         if self._proj_root not in sys.path:
-            sys.path.insert(0, self._proj_root)
+            if not getattr(sys, "frozen", False):
+                sys.path.insert(0, self._proj_root)
         try:
             from cardio_py.core.io import export_analysis_excel
             from pathlib import Path
@@ -691,7 +692,8 @@ class ReviewDialog(QDialog):
         QApplication.processEvents()
         proj_root = str(Path(__file__).parent.parent)
         if proj_root not in sys.path:
-            sys.path.insert(0, proj_root)
+            if not getattr(sys, "frozen", False):
+                sys.path.insert(0, proj_root)
         roi = self._current_roi()
         if roi is None:
             return

@@ -22,7 +22,8 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
 APP_DIR = Path(__file__).parent.parent  # app/
-sys.path.insert(0, str(APP_DIR))
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(APP_DIR))
 from api_client import log_analysis, verify, APIError
 
 _PRESETS_PATH = APP_DIR / "assets" / "presets.json"
@@ -104,9 +105,12 @@ class _QuickWorker(QThread):
         t0 = time.time()
         try:
             # cardio_py is bundled inside app/
-            app_dir = str(Path(__file__).parent.parent)
-            if app_dir not in sys.path:
-                sys.path.insert(0, app_dir)
+            # 打包後不要動 sys.path：Contents/Resources 內含 cv2 等套件，
+            # 插到最前面會讓 cv2 載到檔案系統的那一份而遞迴失敗
+            if not getattr(sys, "frozen", False):
+                app_dir = str(Path(__file__).parent.parent)
+                if app_dir not in sys.path:
+                    sys.path.insert(0, app_dir)
 
             import numpy as np
             from cardio_py.core.io         import read_first_frame
